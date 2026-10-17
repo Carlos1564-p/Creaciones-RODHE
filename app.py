@@ -299,7 +299,10 @@ elif menu == "🛒 Carrito de Compras":
             if payment_method == "Pago Móvil - Banca Amiga":
                 st.success("""
                 📱 **Datos Pago Móvil (Banca Amiga):**
-                - **Titular:** Rosa María Pacheco Azuaje | **Teléfono:** 04244581437
+                - **Cédula / RIF:** V-14242461
+                - **Teléfono:** 04244581437
+                - **Titular:** Rosa María Pacheco Azuaje
+                - **Banco:** Banca Amiga (0172)
                 """)
             elif payment_method == "Zinli (Ahorro / ACH Xpress)":
                 st.success("""
