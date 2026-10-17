@@ -29,6 +29,7 @@ def load_database():
                     "total": float(row["total"]),
                     "payment_mode": str(row.get("payment_mode", "Pago Total (100%)")),
                     "amount_paid": float(row.get("amount_paid", row["total"])),
+                    "amount_paid_ves": float(row.get("amount_paid_ves", 0.0)),
                     "payment": str(row["payment"]),
                     "reference": str(row["reference"]),
                     "bank": str(row["bank"]),
@@ -58,6 +59,7 @@ def save_order_to_disk(new_order):
             "total": order["total"],
             "payment_mode": order.get("payment_mode", "Pago Total (100%)"),
             "amount_paid": order.get("amount_paid", order["total"]),
+            "amount_paid_ves": order.get("amount_paid_ves", 0.0),
             "payment": order["payment"],
             "reference": order["reference"],
             "bank": order["bank"],
@@ -85,14 +87,15 @@ def render_warranty_footer():
     """)
 
 # ----------------- FUNCIÓN DE BOTÓN WHATSAPP -----------------
-def create_whatsapp_button(phone_number, customer_name, order_id, total, amount_paid, payment_mode, reference, state, courier):
-    balance = total - amount_paid
-    msg_payment = f"Pago Total (100%): *${total:.2f} USD*" if payment_mode == "Pago Total (100%)" else f"Abono (50%): *${amount_paid:.2f} USD* (Restante: ${balance:.2f} USD)"
+def create_whatsapp_button(phone_number, customer_name, order_id, total, amount_paid, amount_paid_ves, payment_mode, reference, state, courier, bcv_rate):
+    balance_usd = total - amount_paid
+    msg_payment = f"Pago Total (100%): *${total:.2f} USD* (Bs. {amount_paid * bcv_rate:,.2f})" if payment_mode == "Pago Total (100%)" else f"Abono (50%): *${amount_paid:.2f} USD* (Bs. {amount_paid_ves:,.2f} | Restante: ${balance_usd:.2f} USD)"
     
     message = (
         f"¡Hola {customer_name}! 💎 Gracias por confiar en *Creaciones Rodhe*.\n\n"
         f"Tu pedido *#{order_id}* ha sido registrado.\n"
         f"Modalidad: {msg_payment}\n"
+        f"Tasa BCV Aplicada: {bcv_rate:.2f} VES/USD\n"
         f"Ref de pago: *{reference}* | Destino: *{state}* vía *{courier}*\n"
         f"📦 Tiempo estimado de entrega: *3 a 5 días hábiles*.\n\n"
         f"Te mantendremos informado. ¡Estamos a tu orden!"
@@ -129,8 +132,10 @@ if 'quotes' not in st.session_state:
     st.session_state.quotes = []
 if 'admin_logged' not in st.session_state:
     st.session_state.admin_logged = False
+if 'bcv_rate' not in st.session_state:
+    st.session_state.bcv_rate = 36.50  # Tasa BCV inicial configurable por administrador
 
-# CATÁLOGO EXACTO DE 50 PRODUCTOS CON IMÁGENES Y VIDEOS ESPECÍFICOS Y CORRESPONDIENTES
+# CATÁLOGO EXACTO DE 50 PRODUCTOS CON ESTRUCTURA FINANCIERA REAL
 if 'products' not in st.session_state:
     st.session_state.products = [
         # --- 25 BISUTERÍA ---
@@ -196,7 +201,7 @@ with st.sidebar:
         st.markdown("### 💎 Creaciones Rodhe")
     
     st.markdown("**Plataforma Digital de Lujo**")
-    st.caption("📅 50 Productos con Imagen Exacta")
+    st.info(f"📊 Tasa BCV Actual: **{st.session_state.bcv_rate:.2f} VES/USD**")
     st.markdown("---")
 
 menu = st.sidebar.radio("Menú Principal", [
@@ -211,7 +216,7 @@ menu = st.sidebar.radio("Menú Principal", [
 # ----------------- VISTA 1: CATÁLOGO Y TIENDA -----------------
 if menu == "🛍️ Catálogo y Tienda":
     st.title("💎 Catálogo Exclusivo (50 Artículos - Bisutería & Tecnología)")
-    st.markdown("Explora nuestra selección filtrada por categoría y etiquetada por categoría comercial (*En Oferta, Alta Rotación, Alta Gama*).")
+    st.markdown("Precios reales optimizados (Incluye márgenes comerciales 40-50% / 25-35%, flete internacional Miami-Venezuela, costos operativos de la app y marketing digital).")
     
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -233,7 +238,6 @@ if menu == "🛍️ Catálogo y Tienda":
     
     cols = st.columns(3)
     for index, product in enumerate(filtered_products):
-        # USAMOS LA IMAGEN ESPECÍFICA ASIGNADA A CADA PRODUCTO
         product_image = product.get("image_url", "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80")
         
         with cols[index % 3]:
@@ -241,8 +245,11 @@ if menu == "🛍️ Catálogo y Tienda":
             st.subheader(product["name"])
             st.markdown(f"🏷️ **Origen:** `{product['origin']}` | ⚡ **Tag:** `{product['tag']}`")
             
-            price = product["price_wholesale" if is_wholesale else "price_retail"]
-            st.markdown(f"**Precio:** ${price:.2f} USD")
+            price_usd = product["price_wholesale" if is_wholesale else "price_retail"]
+            price_ves = price_usd * st.session_state.bcv_rate
+            
+            st.markdown(f"**Precio USD:** `${price_usd:.2f} USD`")
+            st.markdown(f"🇻🇪 **Precio BCV:** `Bs. {price_ves:,.2f}`")
             st.markdown(f"📦 *Stock:* {product['stock']} unidades")
             
             with st.expander("Ver Video / Reel Real del Producto"):
@@ -253,7 +260,7 @@ if menu == "🛍️ Catálogo y Tienda":
                 st.session_state.cart.append({
                     "id": product["id"],
                     "name": product["name"],
-                    "price": price,
+                    "price": price_usd,
                     "origin": product["origin"],
                     "mode": "Mayor" if is_wholesale else "Detal"
                 })
@@ -281,33 +288,39 @@ elif menu == "📦 Cotizador Shein / Amazon":
         base_price = 24.99 if "amazon" in product_url.lower() else 8.50
         weight = 0.3 if category_q == "Bisuteria" else 1.2
         shipping_fee = weight * 20.0
-        final_price = ((base_price * quantity_q) + shipping_fee) * 1.35
+        final_price_usd = ((base_price * quantity_q) + shipping_fee) * 1.35
+        final_price_ves = final_price_usd * st.session_state.bcv_rate
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
-        st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
+        st.markdown(f"### **Total Estimado en USD:** ${final_price_usd:.2f} USD")
+        st.markdown(f"### **Total Exacto en Bolívares (Tasa BCV {st.session_state.bcv_rate:.2f}):** Bs. {final_price_ves:,.2f}")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({
                 "platform": platform, 
-                "total": final_price, 
+                "total": final_price_usd, 
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
             st.info("Cotización guardada.")
-# ----------------- VISTA 4: CARRITO, PAGO Y OPCIÓN DE ABONO -----------------
+
+# ----------------- VISTA 4: CARRITO, PAGO Y PASARELA BCV -----------------
 elif menu == "🛒 Carrito de Compras":
-    st.title("🛒 Tu Carrito de Compras, Envío y Modalidad de Pago")
+    st.title("🛒 Tu Carrito de Compras, Envío y Pasarela BCV")
     
     if not st.session_state.cart:
         st.info("Tu carrito está vacío.")
     else:
-        total_general = 0
+        total_general_usd = 0
         for item in st.session_state.cart:
-            st.markdown(f"- **{item['name']}** ({item['origin']}) - [{item['mode']}] - **${item['price']:.2f}**")
-            total_general += item['price']
+            item_ves = item['price'] * st.session_state.bcv_rate
+            st.markdown(f"- **{item['name']}** ({item['origin']}) - [{item['mode']}] - **${item['price']:.2f} USD** (`Bs. {item_ves:,.2f}`)")
+            total_general_usd += item['price']
         
-        st.markdown(f"### Total General del Pedido: **${total_general:.2f} USD**")
+        total_general_ves = total_general_usd * st.session_state.bcv_rate
+        st.markdown(f"### Total General: **${total_general_usd:.2f} USD** | 🇻🇪 **Bs. {total_general_ves:,.2f}**")
+        st.markdown(f"*(Tasa BCV del día: {st.session_state.bcv_rate:.2f} VES/USD)*")
         st.markdown("---")
         
         st.subheader("1. Selecciona la Modalidad de Pago")
@@ -318,13 +331,14 @@ elif menu == "🛒 Carrito de Compras":
         )
         
         if payment_mode_choice == "Abono Parcial (50%)":
-            amount_to_pay_now = total_general * 0.5
-            balance_due = total_general * 0.5
-            st.warning(f"💡 **Has elegido Abono del 50%:** Debes cancelar hoy **${amount_to_pay_now:.2f} USD**. El 50\% restante (**${balance_due:.2f} USD**) se cancela al recibir tu encomienda.")
+            amount_to_pay_usd = total_general_usd * 0.5
+            amount_to_pay_ves = total_general_ves * 0.5
+            balance_usd = total_general_usd * 0.5
+            st.warning(f"💡 **Has elegido Abono del 50%:** Debes cancelar hoy **${amount_to_pay_usd:.2f} USD** o exactamente **Bs. {amount_to_pay_ves:,.2f}**. El 50% restante (**${balance_usd:.2f} USD**) se cancela al recibir tu encomienda.")
         else:
-            amount_to_pay_now = total_general
-            balance_due = 0.0
-            st.success(f"💳 **Pago Total Contado:** Monto exacto a cancelar hoy: **${amount_to_pay_now:.2f} USD**.")
+            amount_to_pay_usd = total_general_usd
+            amount_to_pay_ves = total_general_ves
+            st.success(f"💳 **Pago Total Contado:** Monto exacto a cancelar hoy: **${amount_to_pay_usd:.2f} USD** o **Bs. {amount_to_pay_ves:,.2f}**.")
 
         st.markdown("---")
         st.subheader("2. Datos de Envío y Destino en Venezuela")
@@ -353,16 +367,18 @@ elif menu == "🛒 Carrito de Compras":
             ])
             
             if payment_method == "Pago Móvil - Banca Amiga":
-                st.success("""
-                📱 **Datos Pago Móvil (Banca Amiga):**
+                st.success(f"""
+                📱 **Datos Pago Móvil (Banca Amiga) - Tasa BCV: {st.session_state.bcv_rate:.2f}:**
+                - **Monto Exacto a Pagar:** **Bs. {amount_to_pay_ves:,.2f}** (${amount_to_pay_usd:.2f} USD)
                 - **Cédula / RIF:** V-14242461
                 - **Teléfono:** 04244581437
                 - **Titular:** Rosa María Pacheco Azuaje
                 - **Banco:** Banca Amiga (0172)
                 """)
             elif payment_method == "Zinli (Ahorro / ACH Xpress)":
-                st.success("""
+                st.success(f"""
                 💳 **Datos Zinli / ACH Xpress:**
+                - **Monto Exacto:** ${amount_to_pay_usd:.2f} USD
                 - **Cuenta de Ahorro:** 3-002-05387291-65 | **Titular:** Rosa Pacheco
                 """)
                 
@@ -393,9 +409,10 @@ elif menu == "🛒 Carrito de Compras":
                     "id": new_order_id,
                     "client_name": client_name_input,
                     "items": items_in_order,
-                    "total": total_general,
+                    "total": total_general_usd,
                     "payment_mode": payment_mode_choice,
-                    "amount_paid": amount_to_pay_now,
+                    "amount_paid": amount_to_pay_usd,
+                    "amount_paid_ves": amount_to_pay_ves,
                     "payment": payment_method,
                     "reference": ref_number,
                     "bank": bank_used,
@@ -404,13 +421,13 @@ elif menu == "🛒 Carrito de Compras":
                     "municipality": municipality_input,
                     "courier": courier_choice,
                     "status": "Pagado y Verificado",
-                    "purchase_note": f"Modalidad: {payment_mode_choice} - Ref: {ref_number} ({bank_used})",
+                    "purchase_note": f"Modalidad: {payment_mode_choice} - Ref: {ref_number} (Bs. {amount_to_pay_ves:,.2f})",
                     "delivery_note": f"Envío por {courier_choice} hacia {selected_state} ({municipality_input})",
                     "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
                 }
                 
                 save_order_to_disk(new_order_data)
-                st.success("¡Pedido, modalidad de pago y datos guardados de forma permanente en la base de datos!")
+                st.success("¡Pedido, monto en bolívares y datos guardados de forma permanente en la base de datos!")
                 
                 if client_phone:
                     st.markdown("### Notificar al Cliente vía WhatsApp")
@@ -418,12 +435,14 @@ elif menu == "🛒 Carrito de Compras":
                         phone_number=client_phone,
                         customer_name=client_name_input,
                         order_id=new_order_id,
-                        total=total_general,
-                        amount_paid=amount_to_pay_now,
+                        total=total_general_usd,
+                        amount_paid=amount_to_pay_usd,
+                        amount_paid_ves=amount_to_pay_ves,
                         payment_mode=payment_mode_choice,
                         reference=ref_number,
                         state=selected_state,
-                        courier=courier_choice
+                        courier=courier_choice,
+                        bcv_rate=st.session_state.bcv_rate
                     )
                     st.markdown(whatsapp_btn, unsafe_allow_html=True)
                 
@@ -438,17 +457,17 @@ elif menu == "📋 Mis Pedidos y Estatus":
         st.write("Aún no tienes registros.")
     else:
         for order in st.session_state.orders:
-            st.markdown(f"**Pedido #{order['id']}** | Cliente: **{order.get('client_name', 'N/A')}** | Total: **${order['total']:.2f}**")
-            st.markdown(f"📌 *Modalidad:* `{order.get('payment_mode', 'Pago Total (100%)')}` | *Pagado:* `${order.get('amount_paid', order['total']):.2f}`")
+            st.markdown(f"**Pedido #{order['id']}** | Cliente: **{order.get('client_name', 'N/A')}** | Total: **${order['total']:.2f} USD**")
+            st.markdown(f"📌 *Modalidad:* `{order.get('payment_mode', 'Pago Total (100%)')}` | *Pagado:* `${order.get('amount_paid', order['total']):.2f}` (Bs. {order.get('amount_paid_ves', 0.0):,.2f})")
             st.markdown(f"📍 *Destino:* {order.get('state')} / {order.get('municipality')} vía `{order.get('courier')}`")
             st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Fecha Pago:* {order.get('date_paid', 'N/A')}")
             st.markdown("---")
 
     render_warranty_footer()
 
-# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN -----------------
+# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y TASA BCV -----------------
 elif menu == "🔐 Panel de Administración":
-    st.title("🔐 Panel de Control Administrativo & Gestión Multimedia")
+    st.title("🔐 Panel de Control Administrativo & Tasa BCV")
     
     if not st.session_state.admin_logged:
         admin_pass = st.text_input("Contraseña de Administrador", type="password")
@@ -466,6 +485,20 @@ elif menu == "🔐 Panel de Administración":
             
         st.markdown("---")
         
+        # --- MÓDULO DE ACTUALIZACIÓN DE TASA BCV ---
+        st.subheader("💱 Actualizador de Tasa de Cambio BCV")
+        st.markdown(f"Tasa activa actual: **{st.session_state.bcv_rate:.2f} VES / USD**")
+        
+        with st.form("bcv_update_form"):
+            new_bcv = st.number_input("Nueva Tasa Oficial BCV (VES por 1 USD)", min_value=1.00, value=float(st.session_state.bcv_rate), step=0.10)
+            submit_bcv = st.form_submit_button("Actualizar Tasa BCV en la Tienda")
+            
+            if submit_bcv:
+                st.session_state.bcv_rate = new_bcv
+                st.success(f"¡Tasa BCV actualizada exitosamente a {new_bcv:.2f} VES/USD!")
+                st.rerun()
+
+        st.markdown("---")
         st.subheader("📹 Editor de Videos Reales (Reels del Catálogo de 50 Artículos)")
         
         prod_options = [p["id"] for p in st.session_state.products]
@@ -507,6 +540,7 @@ elif menu == "🔐 Panel de Administración":
                 payment_date = order.get('date_paid', str(datetime.today().date()))
                 pay_mode = order.get('payment_mode', 'Pago Total (100%)')
                 paid_amt = order.get('amount_paid', order['total'])
+                paid_ves_amt = order.get('amount_paid_ves', 0.0)
                 
                 for item in order.get('items', []):
                     store = item.get('origin', 'Stock Nacional')
@@ -532,6 +566,7 @@ elif menu == "🔐 Panel de Administración":
                         "Modo Compra": item.get('mode'),
                         "Modalidad Pago": pay_mode,
                         "Monto Pagado ($)": paid_amt,
+                        "Monto Pagado (Bs)": paid_ves_amt,
                         "Precio Item ($)": price,
                         "Margen Comercial": margin,
                         "Proveedor": store,
