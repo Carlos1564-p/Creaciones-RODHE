@@ -303,7 +303,6 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         col_q1, col_q2, col_q3 = st.columns(3)
         with col_q1:
-            # Entrada dinámica para el precio real capturado de la página de origen
             origin_price = st.number_input("Precio del Producto en la Página ($ USD)", min_value=0.50, value=15.00, step=1.00)
         with col_q2:
             category_q = st.selectbox("Categoría de Importación", ["Bisuteria / Accesorios", "Tecnologia / Electronica", "Ropa / Calzado", "Hogar / Otros"])
@@ -313,7 +312,6 @@ elif menu == "📦 Cotizador Shein / Amazon":
         submit_quote = st.form_submit_button("Calcular Cotización Automática")
 
     if submit_quote and product_url:
-        # Detectar la plataforma mediante la URL
         url_lower = product_url.lower()
         if "amazon" in url_lower:
             platform = "Amazon USA"
@@ -326,7 +324,6 @@ elif menu == "📦 Cotizador Shein / Amazon":
         else:
             platform = "Tienda Internacional"
 
-        # Determinación de peso estimado según categoría
         if "Bisuteria" in category_q:
             weight = 0.2
         elif "Tecnologia" in category_q:
@@ -336,12 +333,9 @@ elif menu == "📦 Cotizador Shein / Amazon":
         else:
             weight = 1.0
 
-        # Cálculo financiero dinámico real
-        shipping_fee = weight * 15.0  # Flete aproximado $15 USD/kg desde casillero Miami
+        shipping_fee = weight * 15.0
         subtotal_base = (origin_price * quantity_q)
-        
-        # Estructura de importación (Costo base + Flete + Gastos Operativos y Margen Comercial)
-        final_price_usd = (subtotal_base + shipping_fee) * 1.30  # 30% Margen operativo e importación
+        final_price_usd = (subtotal_base + shipping_fee) * 1.30
         final_price_ves = final_price_usd * st.session_state.bcv_rate
 
         st.success(f"¡Cotización calculada exitosamente para **{platform}**!")
@@ -366,49 +360,24 @@ elif menu == "📦 Cotizador Shein / Amazon":
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
             st.info("Cotización guardada exitosamente.")
-def evaluar_rentabilidad_pedido(p_base, quantity, weight_unit, tarifa_flete=15.0, markup=1.30):
-    """
-    Evalúa si una importación cumple con los parámetros de rentabilidad positiva.
-    """
-    peso_minimo_casillero = 0.5  # El casillero cobra al menos 0.5 kg por gestión
-    costo_operativo_fijo = 1.50  # Empaque, precintos y gestión operativa ($ USD)
-    utilidad_neta_objetivo = 1.00 # Ganancia neta mínima requerida ($ USD)
-    
-    # 1. Calcular peso total aplicando el mínimo del casillero si aplica
-    peso_total_calculado = quantity * weight_unit
-    peso_efectivo = max(peso_total_calculado, peso_minimo_casillero)
-    
-    # 2. Costos directos (Producto + Flete)
-    costo_producto = p_base * quantity
-    costo_flete = peso_efectivo * tarifa_flete
-    costo_directo_total = costo_producto + costo_flete
-    
-    # 3. Precio de venta con el margen comercial
-    precio_venta = costo_directo_total * markup
-    
-    # 4. Utilidad bruta y Utilidad Neta Real
-    utilidad_bruta = precio_venta - costo_directo_total
-    utilidad_neta_real = utilidad_bruta - costo_operativo_fijo
-    
-    # 5. Condición de alerta
-    if utilidad_neta_real < utilidad_neta_objetivo:
-        return {
-            "estado": "ALERTA: NO RENTABLE ❌",
-            "motivo": f"La utilidad neta (${utilidad_neta_real:.2f}) está por debajo del umbral mínimo de ganancia.",
-            "precio_sugerido": precio_venta,
-            "utilidad_neta": utilidad_neta_real
-        }
-    else:
-        return {
-            "estado": "RENTABLE VÁLIDO ✅",
-            "motivo": "La transacción cubre costos fijos y genera ganancia neta positiva.",
-            "precio_sugerido": precio_venta,
-            "utilidad_neta": utilidad_neta_real
-        }
 
-# --- Ejemplo de prueba con un artículo de bajo costo (Ej. Anillo de $1.50 USD y 0.03 kg) ---
-resultado = evaluar_rentabilidad_pedido(p_base=1.50, quantity=1, weight_unit=0.03)
-print(resultado)
+# ----------------- VISTA 4: CARRITO, PAGO Y PASARELA BCV -----------------
+elif menu == "🛒 Carrito de Compras":
+    st.title("🛒 Tu Carrito de Compras, Envío y Pasarela BCV")
+    
+    if not st.session_state.cart:
+        st.info("Tu carrito está vacío.")
+    else:
+        total_general_usd = 0
+        for item in st.session_state.cart:
+            item_ves = item['price'] * st.session_state.bcv_rate
+            st.markdown(f"- **{item['name']}** ({item['origin']}) - [{item['mode']}] - **${item['price']:.2f} USD** (`Bs. {item_ves:,.2f}`)")
+            total_general_usd += item['price']
+        
+        total_general_ves = total_general_usd * st.session_state.bcv_rate
+        st.markdown(f"### Total General: **${total_general_usd:.2f} USD** | 🇻🇪 **Bs. {total_general_ves:,.2f}**")
+        st.markdown(f"*(Tasa BCV del día: {st.session_state.bcv_rate:.2f} VES/USD)*")
+        st.markdown("---")
 # ----------------- VISTA 4: CARRITO, PAGO Y PASARELA BCV -----------------
 elif menu == "🛒 Carrito de Compras":
     st.title("🛒 Tu Carrito de Compras, Envío y Pasarela BCV")
