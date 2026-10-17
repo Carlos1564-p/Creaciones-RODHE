@@ -38,7 +38,7 @@ def create_whatsapp_button(phone_number, customer_name, order_id, total, referen
     message = (
         f"¡Hola {customer_name}! 💎 Gracias por confiar en *Creaciones Rodhe*.\n\n"
         f"Tu pedido *#{order_id}* por un monto de *${total:.2f} USD* ha sido registrado.\n"
-        f"reference de pago: *{reference}*\n"
+        f"Ref de pago: *{reference}*\n"
         f"📦 El tiempo promedio para que tu pedido esté en la puerta de tu casa es de *3 a 5 días hábiles*.\n\n"
         f"Te mantendremos informado. ¡Estamos a tu orden!"
     )
@@ -180,8 +180,7 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        # LÍNEA CORREGIDA AQUÍ ABAJO:
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
@@ -227,8 +226,9 @@ elif menu == "🛒 Carrito de Compras":
         with st.form("payment_register_form"):
             col_1, col_2 = st.columns(2)
             with col_1:
+                client_name_input = st.text_input("Nombre y Apellido del Cliente", value="Cliente General")
                 ref_number = st.text_input("Número de Referencia Bancaria / Operación")
-                bank_used = st.text_input("Banco Emisor (Ej: Mercantil, Banesco, Zinli)")
+                bank_used = st.text_input("Banco Emisor (Ej: Mercantil, Zinli)")
             with col_2:
                 payment_date = st.date_input("Fecha del Pago", value=datetime.today())
                 client_phone = st.text_input("Teléfono del Cliente (Ej: 584144581437 para WhatsApp)")
@@ -240,25 +240,31 @@ elif menu == "🛒 Carrito de Compras":
                 st.error("Por favor, ingresa el número de referencia del pago.")
             else:
                 new_order_id = len(st.session_state.orders) + 1
+                
+                # Guardar cada ítem del carrito con sus detalles asociados al cliente
+                items_in_order = st.session_state.cart.copy()
+                
                 st.session_state.orders.append({
                     "id": new_order_id,
+                    "client_name": client_name_input,
+                    "items": items_in_order,
                     "total": total_general,
                     "payment": payment_method,
                     "reference": ref_number,
                     "bank": bank_used,
                     "date_paid": str(payment_date),
+                    "status": "Pagado y Verificado",
                     "purchase_note": f"Pago verificado - Ref: {ref_number} ({bank_used})",
                     "delivery_note": "Pendiente guía de envío nacional (MRW/Zoom/Tealca).",
                     "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
                 })
                 st.success("¡Pedido y datos de pago registrados exitosamente en el sistema!")
                 
-                # Botón WhatsApp
                 if client_phone:
                     st.markdown("### Notificar al Cliente vía WhatsApp")
                     whatsapp_btn = create_whatsapp_button(
                         phone_number=client_phone,
-                        customer_name="Estimado Cliente",
+                        customer_name=client_name_input,
                         order_id=new_order_id,
                         total=total_general,
                         reference=ref_number
@@ -274,14 +280,14 @@ elif menu == "📋 Mis Pedidos y Estatus":
         st.write("Aún no tienes registros.")
     else:
         for order in st.session_state.orders:
-            st.markdown(f"**Pedido #{order['id']}** | Total: **${order['total']:.2f}** vía *{order['payment']}*")
-            st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Banco:* {order.get('bank', 'N/A')} | *Fecha:* {order.get('date_paid', 'N/A')}")
-            st.markdown(f"📝 *Compra:* {order['purchase_note']} | 🚚 *Entrega:* {order['delivery_note']}")
+            st.markdown(f"**Pedido #{order['id']}** | Cliente: **{order.get('client_name', 'N/A')}** | Total: **${order['total']:.2f}**")
+            st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Banco:* {order.get('bank', 'N/A')} | *Estado:* `{order.get('status', 'Pagado')}`")
             st.markdown("---")
 
-# ----------------- VISTA 6: ADMIN -----------------
+# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y REPORTE LOGÍSTICO -----------------
 elif menu == "🔐 Panel de Administración":
-    st.title("🔐 Panel de Control Administrativo")
+    st.title("🔐 Panel de Control Administrativo & Reporte Logístico")
+    
     if not st.session_state.admin_logged:
         admin_pass = st.text_input("Contraseña de Administrador", type="password")
         if st.button("Entrar"):
@@ -295,6 +301,58 @@ elif menu == "🔐 Panel de Administración":
         if st.button("Cerrar Sesión"):
             st.session_state.admin_logged = False
             st.rerun()
-        st.metric("Total Pedidos Recibidos", len(st.session_state.orders))
-        if st.session_state.orders:
-            st.dataframe(pd.DataFrame(st.session_state.orders))
+            
+        st.markdown("---")
+        st.subheader("📊 Base de Datos: Pedidos Pagados Ordenados por Clientes")
+        
+        paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
+        
+        if not paid_orders:
+            st.info("No hay pedidos pagados y verificados registrados en el sistema actualmente.")
+        else:
+            st.metric("Total Pedidos Pagados listos para gestión", len(paid_orders))
+            
+            # --- CONSTRUCCIÓN DEL REPORTE DETALLADO PARA COMPRAS INTERNACIONALES ---
+            st.markdown("### ✈️ Reporte Logístico para Compras Internacionales (Shein, Alibaba, etc.)")
+            st.markdown("*Objetivo: Agrupar compras por tienda para ejecución rápida y reducción de tiempos de entrega.*")
+            
+            report_data = []
+            for order in paid_orders:
+                c_name = order.get('client_name', 'Cliente General')
+                for item in order.get('items', []):
+                    # Estimación de margen y tiempo de entrega según la tienda
+                    store = item.get('origin', 'Stock Nacional')
+                    price = item.get('price', 0.0)
+                    
+                    if store in ["Shein", "Alibaba"]:
+                        margin = "35% (Pre-pedido)"
+                        delivery_time = "5 a 8 días hábiles"
+                    elif store in ["Amazon", "eBay"]:
+                        margin = "30% (Importación)"
+                        delivery_time = "4 a 6 días hábiles"
+                    else:
+                        margin = "40% (Stock Local)"
+                        delivery_time = "1 a 3 días hábiles (Nacional)"
+                        
+                    report_data.append({
+                        "Cliente": c_name,
+                        "Producto": item.get('name'),
+                        "Modo": item.get('mode'),
+                        "Precio (USD)": f"${price:.2f}",
+                        "Margen Comercial": margin,
+                        "Tienda / Proveedor": store,
+                        "Tiempo Estimado de Entrega": delivery_time,
+                        "Referencia Pago": order.get('reference')
+                    })
+            
+            df_report = pd.DataFrame(report_data)
+            st.dataframe(df_report, use_container_width=True)
+            
+            # Opción de descarga directa para compras organizadas
+            csv_export = df_report.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Descargar Reporte Logístico en CSV para Compras",
+                data=csv_export,
+                file_name=f"reporte_compras_rodhe_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
