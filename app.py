@@ -281,12 +281,6 @@ if menu == "🛍️ Catálogo y Tienda":
                 })
                 st.success(f"¡{product['name']} agregado!")
 
-# ----------------- VISTA 2: TIENDAS ALIADAS (AL MAYOR) -----------------
-elif menu == "🤝 Tiendas Aliadas (Al Mayor)":
-    st.title("🤝 Módulo de Tiendas Aliadas & Mayoristas")
-    st.markdown("Red de abastecimiento directo para emprendedores y revendedores en Venezuela.")
-    st.info("💡 **Beneficios Mayoristas:** Acceso directo a lotes de alta rotación con tarifas preferenciales y despacho nacional garantizado.")
-
 # ----------------- VISTA 3: COTIZADOR INTERNACIONAL -----------------
 elif menu == "📦 Cotizador Shein / Amazon":
     st.title("📦 Buzón de Cotizaciones Internacionales")
@@ -307,7 +301,8 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
+        # LÍNEA 310 CORREGIDA:
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
