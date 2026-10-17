@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import urllib.parse
+import os
 
 # Configuración de la página
 st.set_page_config(
@@ -10,6 +11,66 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ----------------- PERSISTENCIA DE BASE DE DATOS LOCAL (CSV) -----------------
+DB_FILE = "ventas_rodhe.csv"
+
+def load_database():
+    """Carga los pedidos desde el archivo CSV persistente en disco."""
+    if os.path.exists(DB_FILE):
+        try:
+            df = pd.read_csv(DB_FILE)
+            # Convertir el DataFrame guardado de vuelta al formato de lista de diccionarios de la app
+            orders_list = []
+            for _, row in df.iterrows():
+                orders_list.append({
+                    "id": int(row["id"]),
+                    "client_name": str(row["client_name"]),
+                    "items": eval(row["items"]) if pd.notna(row["items"]) else [],
+                    "total": float(row["total"]),
+                    "payment": str(row["payment"]),
+                    "reference": str(row["reference"]),
+                    "bank": str(row["bank"]),
+                    "date_paid": str(row["date_paid"]),
+                    "state": str(row["state"]),
+                    "municipality": str(row["municipality"]),
+                    "courier": str(row["courier"]),
+                    "status": str(row["status"]),
+                    "purchase_note": str(row["purchase_note"]),
+                    "delivery_note": str(row["delivery_note"]),
+                    "created_at": str(row["created_at"])
+                })
+            return orders_list
+        except Exception:
+            return []
+    return []
+
+def save_order_to_disk(new_order):
+    """Agrega un nuevo pedido y lo guarda de forma permanente en el archivo CSV."""
+    st.session_state.orders.append(new_order)
+    
+    # Preparar datos para tabular y guardar
+    data_to_save = []
+    for order in st.session_state.orders:
+        data_to_save.append({
+            "id": order["id"],
+            "client_name": order["client_name"],
+            "items": str(order["items"]),
+            "total": order["total"],
+            "payment": order["payment"],
+            "reference": order["reference"],
+            "bank": order["bank"],
+            "date_paid": order["date_paid"],
+            "state": order["state"],
+            "municipality": order["municipality"],
+            "courier": order["courier"],
+            "status": order["status"],
+            "purchase_note": order["purchase_note"],
+            "delivery_note": order["delivery_note"],
+            "created_at": order["created_at"]
+        })
+    df_save = pd.DataFrame(data_to_save)
+    df_save.to_csv(DB_FILE, index=False)
 
 # ----------------- FUNCIONES DE ROTACIÓN DIARIA DE IMÁGENES -----------------
 JEWELRY_POOL = [
@@ -69,7 +130,7 @@ def create_whatsapp_button(phone_number, customer_name, order_id, total, referen
 if 'cart' not in st.session_state:
     st.session_state.cart = []
 if 'orders' not in st.session_state:
-    st.session_state.orders = []
+    st.session_state.orders = load_database()  # Carga persistente desde el CSV
 if 'quotes' not in st.session_state:
     st.session_state.quotes = []
 if 'admin_logged' not in st.session_state:
@@ -98,7 +159,7 @@ with st.sidebar:
         st.markdown("### 💎 Creaciones Rodhe")
     
     st.markdown("**Plataforma Digital de Lujo**")
-    st.caption(f"📅 Actualización Diaria Activa")
+    st.caption(f"📅 Base de Datos Persistente Activa")
     st.markdown("---")
 
 menu = st.sidebar.radio("Menú Principal", [
@@ -188,7 +249,7 @@ elif menu == "📦 Cotizador Shein / Amazon":
             st.session_state.quotes.append({"platform": platform, "total": final_price, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
             st.info("Cotización guardada.")
 
-# ----------------- VISTA 4: CARRITO, PAGO Y DATOS DE ENVÍO (ESTADO, MUNICIPIO, MRW) -----------------
+# ----------------- VISTA 4: CARRITO, PAGO Y DATOS DE ENVÍO -----------------
 elif menu == "🛒 Carrito de Compras":
     st.title("🛒 Tu Carrito de Compras, Envío y Pago Definitivo")
     
@@ -212,7 +273,7 @@ elif menu == "🛒 Carrito de Compras":
                     "Bolívar", "Carabobo", "Cojedes", "Delta Amacuro", "Distrito Capital", 
                     "Falcón", "Guárico", "Lara", "Mérida", "Miranda", "Monagas", 
                     "Nueva Esparta", "Portuguesa", "Sucre", "Táchira", "Trujillo", 
-                    "Vargas (La Guaira)", "Yaracuy", "Zulia"
+                    "Vargas (La Guaira)", "Zulia"
                 ]
                 selected_state = st.selectbox("Estado de Destino", sorted(list(set(venezuela_states))))
             with col_env2:
@@ -262,7 +323,7 @@ elif menu == "🛒 Carrito de Compras":
                 new_order_id = len(st.session_state.orders) + 1
                 items_in_order = st.session_state.cart.copy()
                 
-                st.session_state.orders.append({
+                new_order_data = {
                     "id": new_order_id,
                     "client_name": client_name_input,
                     "items": items_in_order,
@@ -278,8 +339,12 @@ elif menu == "🛒 Carrito de Compras":
                     "purchase_note": f"Pago verificado - Ref: {ref_number} ({bank_used})",
                     "delivery_note": f"Envío por {courier_choice} hacia {selected_state} ({municipality_input})",
                     "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
-                })
-                st.success("¡Pedido y datos de envío/pago registrados exitosamente!")
+                }
+                
+                # Guardar de forma persistente en disco
+                save_order_to_disk(new_order_data)
+                
+                st.success("¡Pedido y datos de envío/pago guardados de forma permanente en la base de datos!")
                 
                 if client_phone:
                     st.markdown("### Notificar al Cliente vía WhatsApp")
@@ -305,12 +370,12 @@ elif menu == "📋 Mis Pedidos y Estatus":
         for order in st.session_state.orders:
             st.markdown(f"**Pedido #{order['id']}** | Cliente: **{order.get('client_name', 'N/A')}** | Total: **${order['total']:.2f}**")
             st.markdown(f"📍 *Destino:* {order.get('state')} / {order.get('municipality')} vía `{order.get('courier')}`")
-            st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Estado:* `{order.get('status', 'Pagado')}`")
+            st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Fecha Pago:* {order.get('date_paid', 'N/A')}")
             st.markdown("---")
 
-# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y REPORTES AVANZADOS -----------------
+# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y REPORTES DIARIOS -----------------
 elif menu == "🔐 Panel de Administración":
-    st.title("🔐 Panel de Control Administrativo & Reportes Logísticos")
+    st.title("🔐 Panel de Control Administrativo & Base de Datos Histórica")
     
     if not st.session_state.admin_logged:
         admin_pass = st.text_input("Contraseña de Administrador", type="password")
@@ -327,14 +392,14 @@ elif menu == "🔐 Panel de Administración":
             st.rerun()
             
         st.markdown("---")
-        st.subheader("📊 Base de Datos General de Compras Pagadas")
+        st.subheader("📊 Base de Datos General (Almacenamiento Permanente por Fecha)")
         
-        paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
+        paid_orders = [o for o in st.session_state.orders if o.get('status'] == "Pagado y Verificado"]
         
         if not paid_orders:
             st.info("No hay pedidos pagados y verificados registrados en el sistema actualmente.")
         else:
-            st.metric("Total Pedidos Pagados", len(paid_orders))
+            st.metric("Total Histórico de Pedidos Pagados", len(paid_orders))
             
             # --- CONSOLIDACIÓN DE DATOS PARA REPORTES ---
             report_data = []
@@ -344,6 +409,7 @@ elif menu == "🔐 Panel de Administración":
                 municipality_dest = order.get('municipality', 'N/A')
                 courier_dest = order.get('courier', 'N/A')
                 ref_pay = order.get('reference', 'N/A')
+                payment_date = order.get('date_paid', str(datetime.today().date()))
                 
                 for item in order.get('items', []):
                     store = item.get('origin', 'Stock Nacional')
@@ -363,6 +429,7 @@ elif menu == "🔐 Panel de Administración":
                         store_type = "Nacional"
                         
                     report_data.append({
+                        "Fecha Pago": payment_date,
                         "Cliente": c_name,
                         "Producto": item.get('name'),
                         "Modo": item.get('mode'),
@@ -379,47 +446,56 @@ elif menu == "🔐 Panel de Administración":
             
             df_report = pd.DataFrame(report_data)
             
-            # --- MÓDULO DE GENERACIÓN DE REPORTES ESPECÍFICOS ---
-            st.markdown("### 🔍 Selector de Reportes Avanzados")
-            report_type = st.selectbox("Seleccione el tipo de reporte a generar:", [
-                "Reporte General Consolidado", 
+            # --- MÓDULO DE REPORTES Y FILTROS POR FECHA ---
+            st.markdown("### 📅 Reporte Diario y Filtrado Histórico")
+            
+            # Selector de tipo de reporte
+            report_mode = st.radio("Seleccione el enfoque del reporte:", [
+                "Reporte Diario por Fecha Específica",
+                "Reporte Consolidado General", 
                 "Reporte por Cliente", 
                 "Reporte por Empresa (Nacional / Internacional)", 
                 "Reporte por Producto", 
                 "Reporte por Estado"
-            ])
+            ], horizontal=True)
             
-            if report_type == "Reporte General Consolidado":
-                st.markdown("#### Vista General de Todas las Compras")
+            if report_mode == "Reporte Diario por Fecha Específica":
+                available_dates = sorted(df_report["Fecha Pago"].unique(), reverse=True)
+                selected_date = st.selectbox("Seleccione la Fecha de Compra", available_dates)
+                df_filtered = df_report[df_report["Fecha Pago"] == selected_date]
+                st.markdown(f"#### Compras registradas para el día: `{selected_date}`")
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_mode == "Reporte Consolidado General":
+                st.markdown("#### Historial Completo Acumulado")
                 st.dataframe(df_report, use_container_width=True)
                 
-            elif report_type == "Reporte por Cliente":
+            elif report_mode == "Reporte por Cliente":
                 selected_client = st.selectbox("Seleccione el Cliente", df_report["Cliente"].unique())
                 df_filtered = df_report[df_report["Cliente"] == selected_client]
                 st.dataframe(df_filtered, use_container_width=True)
                 
-            elif report_type == "Reporte por Empresa (Nacional / Internacional)":
+            elif report_mode == "Reporte por Empresa (Nacional / Internacional)":
                 selected_type = st.selectbox("Seleccione tipo de empresa / origen", df_report["Tipo Empresa"].unique())
                 df_filtered = df_report[df_report["Tipo Empresa"] == selected_type]
-                st.markdown(f"*Mostrando compras para origen: {selected_type} (Ideal para consolidar pedidos con proveedores)*")
                 st.dataframe(df_filtered, use_container_width=True)
                 
-            elif report_type == "Reporte por Producto":
+            elif report_mode == "Reporte por Producto":
                 selected_prod = st.selectbox("Seleccione el Producto", df_report["Producto"].unique())
                 df_filtered = df_report[df_report["Producto"] == selected_prod]
                 st.dataframe(df_filtered, use_container_width=True)
                 
-            elif report_type == "Reporte por Estado":
+            elif report_mode == "Reporte por Estado":
                 selected_st = st.selectbox("Seleccione el Estado de Destino", df_report["Estado Destino"].unique())
                 df_filtered = df_report[df_report["Estado Destino"] == selected_st]
                 st.dataframe(df_filtered, use_container_width=True)
             
             st.markdown("---")
-            # Botón de descarga CSV del reporte seleccionado o general
+            # Botón de descarga CSV del reporte histórico acumulado o diario
             csv_export = df_report.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📥 Descargar Base de Datos Completa en CSV para Compras",
+                label="📥 Descargar Base de Datos Histórica en CSV",
                 data=csv_export,
-                file_name=f"reporte_logistico_rodhe_{datetime.now().strftime('%Y%m%d')}.csv",
+                file_name=f"base_datos_historica_rodhe_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
