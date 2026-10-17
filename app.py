@@ -144,19 +144,19 @@ if 'quotes' not in st.session_state:
 if 'admin_logged' not in st.session_state:
     st.session_state.admin_logged = False
 
-# Catálogo con origen detallado
+# Catálogo con origen y campo de video real incorporado
 if 'products' not in st.session_state:
     st.session_state.products = [
-        {"id": 1, "name": "Set de Cadenas Minimalistas Acero Quirúrgico", "category": "Bisuteria", "origin": "Shein", "price_retail": 12.0, "price_wholesale": 8.5, "stock": 50},
-        {"id": 2, "name": "Anillos Apilables con Zirconias (Set x5)", "category": "Bisuteria", "origin": "Alibaba", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 40},
-        {"id": 3, "name": "Pulsera Estilo Cartier de Lujo (Baño Oro 18k)", "category": "Bisuteria", "origin": "Stock Nacional", "price_retail": 18.0, "price_wholesale": 13.0, "stock": 25},
-        {"id": 4, "name": "Zarcillos Huggie con Incrustaciones", "category": "Bisuteria", "origin": "Shein", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 60},
-        {"id": 5, "name": "Kit Emprendedor Bisutería Surtida (20 pzas)", "category": "Bisuteria", "origin": "Alibaba", "price_retail": 65.0, "price_wholesale": 48.0, "stock": 15},
-        {"id": 6, "name": "Smartwatch Deportivo Ultra Serie 8", "category": "Tecnologia", "origin": "Amazon", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 30},
-        {"id": 7, "name": "Audífonos Inalámbricos TWS Pro con Cancelación", "category": "Tecnologia", "origin": "eBay", "price_retail": 15.0, "price_wholesale": 10.5, "stock": 45},
-        {"id": 8, "name": "Aro de Luz LED 10' con Trípode para Streamers", "category": "Tecnologia", "origin": "Stock Nacional", "price_retail": 22.0, "price_wholesale": 16.0, "stock": 20},
-        {"id": 9, "name": "Power Bank Carga Rápida 20,000mAh", "category": "Tecnologia", "origin": "Amazon", "price_retail": 28.0, "price_wholesale": 21.0, "stock": 35},
-        {"id": 10, "name": "Cargador Rápido Multipuerto USB-C GaN 65W", "category": "Tecnologia", "origin": "Alibaba", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25}
+        {"id": 1, "name": "Set de Cadenas Minimalistas Acero Quirúrgico", "category": "Bisuteria", "origin": "Shein", "price_retail": 12.0, "price_wholesale": 8.5, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 2, "name": "Anillos Apilables con Zirconias (Set x5)", "category": "Bisuteria", "origin": "Alibaba", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 3, "name": "Pulsera Estilo Cartier de Lujo (Baño Oro 18k)", "category": "Bisuteria", "origin": "Stock Nacional", "price_retail": 18.0, "price_wholesale": 13.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 4, "name": "Zarcillos Huggie con Incrustaciones", "category": "Bisuteria", "origin": "Shein", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 60, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 5, "name": "Kit Emprendedor Bisutería Surtida (20 pzas)", "category": "Bisuteria", "origin": "Alibaba", "price_retail": 65.0, "price_wholesale": 48.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 6, "name": "Smartwatch Deportivo Ultra Serie 8", "category": "Tecnologia", "origin": "Amazon", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 7, "name": "Audífonos Inalámbricos TWS Pro con Cancelación", "category": "Tecnologia", "origin": "eBay", "price_retail": 15.0, "price_wholesale": 10.5, "stock": 45, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 8, "name": "Aro de Luz LED 10' con Trípode para Streamers", "category": "Tecnologia", "origin": "Stock Nacional", "price_retail": 22.0, "price_wholesale": 16.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 9, "name": "Power Bank Carga Rápida 20,000mAh", "category": "Tecnologia", "origin": "Amazon", "price_retail": 28.0, "price_wholesale": 21.0, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 10, "name": "Cargador Rápido Multipuerto USB-C GaN 65W", "category": "Tecnologia", "origin": "Alibaba", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"}
     ]
 
 # ----------------- BARRA LATERAL (LOGO Y MENÚ) -----------------
@@ -209,9 +209,10 @@ if menu == "🛍️ Catálogo y Tienda":
             st.markdown(f"**Precio:** ${price:.2f} USD")
             st.markdown(f"📦 *Disponibles:* {product['stock']} unidades")
             
-            with st.expander("Ver Video Demostrativo y Reels"):
-                st.video("https://www.w3schools.com/html/mov_bbb.mp4")
-                st.caption("Demostración en alta calidad.")
+            with st.expander("Ver Reel / Video Real del Producto"):
+                # Reproduce el video configurado en la base de datos del producto
+                st.video(product.get("video_url", "https://www.w3schools.com/html/mov_bbb.mp4"))
+                st.caption("Video demostrativo real de la prenda o artículo.")
             
             if st.button(f"Agregar al Carrito", key=f"add_{product['id']}"):
                 st.session_state.cart.append({
@@ -256,7 +257,6 @@ elif menu == "📦 Cotizador Shein / Amazon":
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({"platform": platform, "total": final_price, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
             st.info("Cotización guardada.")
-
 # ----------------- VISTA 4: CARRITO, PAGO Y DATOS DE ENVÍO -----------------
 elif menu == "🛒 Carrito de Compras":
     st.title("🛒 Tu Carrito de Compras, Envío y Pago Definitivo")
@@ -370,7 +370,6 @@ elif menu == "🛒 Carrito de Compras":
                 
                 st.session_state.cart = []
 
-    # Pie de página con Términos de Garantía
     render_warranty_footer()
 
 # ----------------- VISTA 5: MIS PEDIDOS -----------------
@@ -385,12 +384,11 @@ elif menu == "📋 Mis Pedidos y Estatus":
             st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Fecha Pago:* {order.get('date_paid', 'N/A')}")
             st.markdown("---")
 
-    # Pie de página con Términos de Garantía
     render_warranty_footer()
 
-# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y REPORTES DIARIOS -----------------
+# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y GESTIÓN DE VIDEOS -----------------
 elif menu == "🔐 Panel de Administración":
-    st.title("🔐 Panel de Control Administrativo & Base de Datos Histórica")
+    st.title("🔐 Panel de Control Administrativo & Gestión Multimedia")
     
     if not st.session_state.admin_logged:
         admin_pass = st.text_input("Contraseña de Administrador", type="password")
@@ -406,6 +404,33 @@ elif menu == "🔐 Panel de Administración":
             st.session_state.admin_logged = False
             st.rerun()
             
+        st.markdown("---")
+        
+        # --- NUEVO MÓDULO: GESTIÓN Y EDICIÓN DE VIDEOS REALES DE PRODUCTOS ---
+        st.subheader("📹 Editor de Videos Reales (Reels de Cadenas y Relojes)")
+        st.markdown("Selecciona un producto para actualizar su enlace de video demostrativo real (formato MP4 o enlace directo).")
+        
+        selected_prod_id = st.selectbox(
+            "Seleccionar Producto del Catálogo", 
+            options=[p["id"] for p in st.session_state.products],
+            format_func=lambda x: next(f"ID {p['id']} - {p['name']} ({p['origin']})" for p in st.session_state.products if p["id"] == x)
+        )
+        
+        # Obtener el producto seleccionado
+        prod_to_edit = next(p for p in st.session_state.products if p["id"] == selected_prod_id)
+        
+        with st.form(f"edit_video_form_{selected_prod_id}"):
+            current_video = prod_to_edit.get("video_url", "")
+            new_video_url = st.text_input("URL del Video Real (Enlace directo MP4 o Reel)", value=current_video)
+            st.caption("💡 Tip: Puedes subir tu video a un servidor o nube pública (como GitHub, S3 o enlace directo MP4) y pegar la URL aquí.")
+            
+            submit_video_edit = st.form_submit_button("Actualizar Video del Producto")
+            
+            if submit_video_edit:
+                prod_to_edit["video_url"] = new_video_url
+                st.success(f"¡Video actualizado correctamente para: {prod_to_edit['name']}!")
+                st.rerun()
+                
         st.markdown("---")
         st.subheader("📊 Base de Datos General (Almacenamiento Permanente por Fecha)")
         
