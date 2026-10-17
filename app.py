@@ -155,7 +155,7 @@ if 'admin_logged' not in st.session_state:
 if 'bcv_rate' not in st.session_state:
     st.session_state.bcv_rate = load_bcv_rate()
 
-# CATÁLOGO DE 50 PRODUCTOS
+# CATÁLOGO EXACTO DE 50 PRODUCTOS CON RUTAS DE IMAGEN Y VIDEO RIGUROSAMENTE SINCRONIZADAS
 if 'products' not in st.session_state:
     st.session_state.products = [
         # --- 25 BISUTERÍA ---
@@ -234,7 +234,7 @@ menu = st.sidebar.radio("Menú Principal", [
     "🔐 Panel de Administración"
 ])
 
-# ----------------- VISTA 1: CATÁLOGO Y TIENDA -----------------
+# ----------------- VISTA 1: CATÁLOGO Y TIENDA (SINCRONIZACIÓN BLINDADA) -----------------
 if menu == "🛍️ Catálogo y Tienda":
     st.title("💎 Catálogo Exclusivo (50 Artículos - Bisutería & Tecnología)")
     st.markdown("Explora nuestra selección curada de alta rotación con precios transparentes en USD y Bolívares a tasa oficial BCV.")
@@ -259,33 +259,39 @@ if menu == "🛍️ Catálogo y Tienda":
     
     cols = st.columns(3)
     for index, product in enumerate(filtered_products):
-        product_image = product.get("image_url", "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80")
+        # Enlace estricto y directo usando las propiedades inmutables del objeto producto
+        product_image = product["image_url"]
+        product_video = product["video_url"]
+        product_name = product["name"]
+        product_origin = product["origin"]
+        product_tag = product["tag"]
+        product_stock = product["stock"]
+        
+        price_usd = product["price_wholesale" if is_wholesale else "price_retail"]
+        price_ves = price_usd * st.session_state.bcv_rate
         
         with cols[index % 3]:
             st.image(product_image, use_container_width=True)
-            st.subheader(product["name"])
-            st.markdown(f"🏷️ **Origen:** `{product['origin']}` | ⚡ **Tag:** `{product['tag']}`")
-            
-            price_usd = product["price_wholesale" if is_wholesale else "price_retail"]
-            price_ves = price_usd * st.session_state.bcv_rate
+            st.subheader(product_name)
+            st.markdown(f"🏷️ **Origen:** `{product_origin}` | ⚡ **Tag:** `{product_tag}`")
             
             st.markdown(f"**Precio USD:** `${price_usd:.2f} USD`")
             st.markdown(f"🇻🇪 **Precio BCV:** `Bs. {price_ves:,.2f}`")
-            st.markdown(f"📦 *Stock:* {product['stock']} unidades")
+            st.markdown(f"📦 *Stock:* {product_stock} unidades")
             
             with st.expander("Ver Video / Reel Real del Producto"):
-                st.video(product.get("video_url", "https://www.w3schools.com/html/mov_bbb.mp4"))
+                st.video(product_video)
                 st.caption("Demostración real en alta calidad.")
             
-            if st.button("Agregar al Carrito", key=f"add_{product['id']}"):
+            if st.button("Agregar al Carrito", key=f"add_{product['id']}_{index}"):
                 st.session_state.cart.append({
                     "id": product["id"],
-                    "name": product["name"],
+                    "name": product_name,
                     "price": price_usd,
-                    "origin": product["origin"],
+                    "origin": product_origin,
                     "mode": "Mayor" if is_wholesale else "Detal"
                 })
-                st.success(f"¡{product['name']} agregado!")
+                st.success(f"¡{product_name} agregado!")
 
 # ----------------- VISTA 2: TIENDAS ALIADAS (AL MAYOR) -----------------
 elif menu == "🤝 Tiendas Aliadas (Al Mayor)":
@@ -309,17 +315,19 @@ elif menu == "📦 Cotizador Shein / Amazon":
         base_price = 24.99 if "amazon" in product_url.lower() else 8.50
         weight = 0.3 if category_q == "Bisuteria" else 1.2
         shipping_fee = weight * 20.0
-        final_price = ((base_price * quantity_q) + shipping_fee) * 1.35
+        final_price_usd = ((base_price * quantity_q) + shipping_fee) * 1.35
+        final_price_ves = final_price_usd * st.session_state.bcv_rate
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
-        st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
+        st.markdown(f"### **Total Estimado en USD:** ${final_price_usd:.2f} USD")
+        st.markdown(f"### **Total Exacto en Bolívares (Tasa BCV {st.session_state.bcv_rate:.2f}):** Bs. {final_price_ves:,.2f}")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({
                 "platform": platform, 
-                "total": final_price, 
+                "total": final_price_usd, 
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
             st.info("Cotización guardada.")
