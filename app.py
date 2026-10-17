@@ -67,7 +67,7 @@ if 'products' not in st.session_state:
 # ----------------- BARRA LATERAL CON LOGOTIPO -----------------
 with st.sidebar:
     # Logotipo Corporativo (Imagen estilizada o banner de marca)
-    st.image("https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=200&q=80", width=120)
+    st.image("logorode.jpg", width=120)
     st.markdown("# 💎 Creaciones Rodhe")
     st.markdown("**Plataforma Digital de Lujo**")
     st.caption(f"📅 Rotación diaria activa - {datetime.now().strftime('%d/%m/%Y')}")
