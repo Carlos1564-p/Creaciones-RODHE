@@ -195,13 +195,13 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({"platform": platform, "total": final_price, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
             st.info("Cotización guardada.")
-
+            
 # ----------------- VISTA 4: CARRITO Y CHECKOUT CON DATOS DE PAGO -----------------
 elif menu == "🛒 Carrito de Compras":
     st.title("🛒 Tu Carrito de Compras y Pasarela de Pago")
