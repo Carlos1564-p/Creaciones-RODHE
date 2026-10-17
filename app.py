@@ -34,12 +34,13 @@ def get_daily_product_image(category, index):
     return pool[(index + day_offset) % len(pool)]
 
 # ----------------- FUNCIÓN DE BOTÓN WHATSAPP -----------------
-def create_whatsapp_button(phone_number, customer_name, order_id, total):
+def create_whatsapp_button(phone_number, customer_name, order_id, total, reference):
     message = (
         f"¡Hola {customer_name}! 💎 Gracias por confiar en *Creaciones Rodhe*.\n\n"
-        f"Tu pedido *#{order_id}* por un monto de *${total:.2f} USD* ha sido registrado con éxito.\n"
-        f"📦 El tiempo promedio para que tu pedido esté en la puerta de tu casa es de *3 a 5 días hábiles* (según disponibilidad y despacho nacional).\n\n"
-        f"Te mantendremos informado con tu nota de entrega. ¡Estamos a tu orden!"
+        f"Tu pedido *#{order_id}* por un monto de *${total:.2f} USD* ha sido registrado.\n"
+        f"reference de pago: *{reference}*\n"
+        f"📦 El tiempo promedio para que tu pedido esté en la puerta de tu casa es de *3 a 5 días hábiles*.\n\n"
+        f"Te mantendremos informado. ¡Estamos a tu orden!"
     )
     encoded_message = urllib.parse.quote(message)
     whatsapp_url = f"https://wa.me/{phone_number}?text={encoded_message}"
@@ -156,24 +157,8 @@ if menu == "🛍️ Catálogo y Tienda":
 # ----------------- VISTA 2: TIENDAS ALIADAS (AL MAYOR) -----------------
 elif menu == "🤝 Tiendas Aliadas (Al Mayor)":
     st.title("🤝 Módulo de Tiendas Aliadas & Mayoristas")
-    st.markdown("Red de abastecimiento directo para emprendedores y revendedores en Venezuela con conexiones logísticas optimizadas.")
-    
+    st.markdown("Red de abastecimiento directo para emprendedores y revendedores en Venezuela.")
     st.info("💡 **Beneficios Mayoristas:** Acceso directo a lotes de alta rotación con tarifas preferenciales y despacho nacional garantizado.")
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.subheader("🌐 Aliados Internacionales directos")
-        st.markdown("""
-        - **Shein Partner Hub:** Acceso a catálogos masivos de moda y accesorios.
-        - **Alibaba Direct Supply:** Compra de lotes tecnológicos e industriales al costo de fábrica.
-        - **Amazon / eBay Bulk:** Suministro de gadgets certificados.
-        """)
-    with col_b:
-        st.subheader("📦 Aliados Logísticos en Venezuela")
-        st.markdown("""
-        - Despachos nacionales asegurados a través de **MRW, Zoom y Tealca**.
-        - Consolidación de carga semanal desde Miami.
-        """)
 
 # ----------------- VISTA 3: COTIZADOR INTERNACIONAL -----------------
 elif menu == "📦 Cotizador Shein / Amazon":
@@ -195,16 +180,16 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({"platform": platform, "total": final_price, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
             st.info("Cotización guardada.")
-            
-# ----------------- VISTA 4: CARRITO Y CHECKOUT CON DATOS DE PAGO -----------------
+
+# ----------------- VISTA 4: CARRITO, PAGO Y REGISTRO DE REFERENCIA -----------------
 elif menu == "🛒 Carrito de Compras":
-    st.title("🛒 Tu Carrito de Compras y Pasarela de Pago")
+    st.title("🛒 Tu Carrito de Compras y Registro de Pago")
     
     if not st.session_state.cart:
         st.info("Tu carrito está vacío.")
@@ -217,8 +202,8 @@ elif menu == "🛒 Carrito de Compras":
         st.markdown(f"### Total a Pagar: **${total_general:.2f} USD**")
         st.markdown("---")
         
-        st.subheader("Selecciona tu Método de Pago Configurado")
-        payment_method = st.selectbox("Pasarela de Pago", [
+        st.subheader("1. Selecciona tu Método de Pago")
+        payment_method = st.selectbox("Pasarela", [
             "Pago Móvil - Banca Amiga", 
             "Zinli (Ahorro / ACH Xpress)", 
             "Efectivo Divisa"
@@ -226,47 +211,60 @@ elif menu == "🛒 Carrito de Compras":
         
         if payment_method == "Pago Móvil - Banca Amiga":
             st.success("""
-            📱 **Instrucciones Pago Móvil (Banca Amiga):**
-            - **Banco:** Banca Amiga
-            - **Titular:** Rosa María Pacheco Azuaje
-            - **Teléfono:** 04244581437
+            📱 **Datos Pago Móvil (Banca Amiga):**
+            - **Titular:** Rosa María Pacheco Azuaje | **Teléfono:** 04244581437
             """)
         elif payment_method == "Zinli (Ahorro / ACH Xpress)":
             st.success("""
-            💳 **Instrucciones Zinli / ACH Xpress:**
-            - **Cuenta de Ahorro:** 3-002-05387291-65
-            - **Titular:** Rosa Pacheco
-            - **Plataforma:** Transacciones ACH Xpress
+            💳 **Datos Zinli / ACH Xpress:**
+            - **Cuenta de Ahorro:** 3-002-05387291-65 | **Titular:** Rosa Pacheco
             """)
+            
+        st.markdown("---")
+        st.subheader("2. Registro de Datos de Pago del Cliente")
         
-        client_phone = st.text_input("Número de Teléfono del Cliente (Ej: 584144581437 para WhatsApp)")
+        with st.form("payment_register_form"):
+            col_1, col_2 = st.columns(2)
+            with col_1:
+                ref_number = st.text_input("Número de Referencia Bancaria / Operación")
+                bank_used = st.text_input("Banco Emisor (Ej: Mercantil, Banesco, Zinli)")
+            with col_2:
+                payment_date = st.date_input("Fecha del Pago", value=datetime.today())
+                client_phone = st.text_input("Teléfono del Cliente (Ej: 584144581437 para WhatsApp)")
+            
+            submit_payment = st.form_submit_button("Confirmar y Registrar Pedido")
 
-        if st.button("Confirmar Pedido"):
-            new_order_id = len(st.session_state.orders) + 1
-            st.session_state.orders.append({
-                "id": new_order_id,
-                "total": total_general,
-                "payment": payment_method,
-                "purchase_note": "Pendiente de verificación de pago.",
-                "delivery_note": "Pendiente guía de envío nacional (MRW/Zoom/Tealca).",
-                "date": datetime.now().strftime("%Y-%m-%d %H:%M")
-            })
-            st.success("¡Pedido registrado exitosamente!")
-            
-            # Botón de WhatsApp integrado
-            if client_phone:
-                st.markdown("### Enviar Notificación al Cliente")
-                whatsapp_btn = create_whatsapp_button(
-                    phone_number=client_phone,
-                    customer_name="Estimado Cliente",
-                    order_id=new_order_id,
-                    total=total_general
-                )
-                st.markdown(whatsapp_btn, unsafe_allow_html=True)
+        if submit_payment:
+            if not ref_number:
+                st.error("Por favor, ingresa el número de referencia del pago.")
             else:
-                st.warning("Introduce un número de teléfono arriba para habilitar el botón de WhatsApp automático.")
-            
-            st.session_state.cart = []
+                new_order_id = len(st.session_state.orders) + 1
+                st.session_state.orders.append({
+                    "id": new_order_id,
+                    "total": total_general,
+                    "payment": payment_method,
+                    "reference": ref_number,
+                    "bank": bank_used,
+                    "date_paid": str(payment_date),
+                    "purchase_note": f"Pago verificado - Ref: {ref_number} ({bank_used})",
+                    "delivery_note": "Pendiente guía de envío nacional (MRW/Zoom/Tealca).",
+                    "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+                })
+                st.success("¡Pedido y datos de pago registrados exitosamente en el sistema!")
+                
+                # Botón WhatsApp
+                if client_phone:
+                    st.markdown("### Notificar al Cliente vía WhatsApp")
+                    whatsapp_btn = create_whatsapp_button(
+                        phone_number=client_phone,
+                        customer_name="Estimado Cliente",
+                        order_id=new_order_id,
+                        total=total_general,
+                        reference=ref_number
+                    )
+                    st.markdown(whatsapp_btn, unsafe_allow_html=True)
+                
+                st.session_state.cart = []
 
 # ----------------- VISTA 5: MIS PEDIDOS -----------------
 elif menu == "📋 Mis Pedidos y Estatus":
@@ -276,8 +274,8 @@ elif menu == "📋 Mis Pedidos y Estatus":
     else:
         for order in st.session_state.orders:
             st.markdown(f"**Pedido #{order['id']}** | Total: **${order['total']:.2f}** vía *{order['payment']}*")
-            st.markdown(f"📝 *Nota de Compra:* {order['purchase_note']}")
-            st.markdown(f"🚚 *Nota de Entrega:* {order['delivery_note']}")
+            st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Banco:* {order.get('bank', 'N/A')} | *Fecha:* {order.get('date_paid', 'N/A')}")
+            st.markdown(f"📝 *Compra:* {order['purchase_note']} | 🚚 *Entrega:* {order['delivery_note']}")
             st.markdown("---")
 
 # ----------------- VISTA 6: ADMIN -----------------
