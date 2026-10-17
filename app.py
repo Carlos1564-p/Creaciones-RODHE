@@ -293,42 +293,79 @@ if menu == "🛍️ Catálogo y Tienda":
                 })
                 st.success(f"¡{product_name} agregado!")
 
-# ----------------- VISTA 2: TIENDAS ALIADAS (AL MAYOR) -----------------
-elif menu == "🤝 Tiendas Aliadas (Al Mayor)":
-    st.title("🤝 Módulo de Tiendas Aliadas & Mayoristas")
-    st.markdown("Red de abastecimiento directo para emprendedores y revendedores en Venezuela.")
-    st.info("💡 **Beneficios Mayoristas:** Acceso directo a lotes de alta rotación con tarifas preferenciales y despacho nacional garantizado.")
-
 # ----------------- VISTA 3: COTIZADOR INTERNACIONAL -----------------
 elif menu == "📦 Cotizador Shein / Amazon":
     st.title("📦 Buzón de Cotizaciones Internacionales")
-    st.markdown("Pega el enlace de **Shein, Alibaba, Amazon o eBay** para calcular tu importación.")
+    st.markdown("Pega el enlace de **Shein, Alibaba, Amazon o eBay** e ingresa el precio publicado para calcular el costo de importación a Venezuela.")
 
     with st.form("quote_form"):
-        product_url = st.text_input("URL del Producto")
-        category_q = st.selectbox("Categoría", ["Bisuteria", "Tecnologia"])
-        quantity_q = st.number_input("Cantidad deseada", min_value=1, value=1)
+        product_url = st.text_input("URL o Enlace del Producto", placeholder="Ej: https://www.amazon.com/dp/B08N5WRWNW")
+        
+        col_q1, col_q2, col_q3 = st.columns(3)
+        with col_q1:
+            # Entrada dinámica para el precio real capturado de la página de origen
+            origin_price = st.number_input("Precio del Producto en la Página ($ USD)", min_value=0.50, value=15.00, step=1.00)
+        with col_q2:
+            category_q = st.selectbox("Categoría de Importación", ["Bisuteria / Accesorios", "Tecnologia / Electronica", "Ropa / Calzado", "Hogar / Otros"])
+        with col_q3:
+            quantity_q = st.number_input("Cantidad Deseada", min_value=1, value=1)
+            
         submit_quote = st.form_submit_button("Calcular Cotización Automática")
 
     if submit_quote and product_url:
-        platform = "Amazon" if "amazon" in product_url.lower() else "Shein / Alibaba"
-        base_price = 24.99 if "amazon" in product_url.lower() else 8.50
-        weight = 0.3 if category_q == "Bisuteria" else 1.2
-        shipping_fee = weight * 20.0
-        final_price = ((base_price * quantity_q) + shipping_fee) * 1.35
+        # Detectar la plataforma mediante la URL
+        url_lower = product_url.lower()
+        if "amazon" in url_lower:
+            platform = "Amazon USA"
+        elif "shein" in url_lower:
+            platform = "Shein"
+        elif "alibaba" in url_lower or "aliexpress" in url_lower:
+            platform = "Alibaba / AliExpress"
+        elif "ebay" in url_lower:
+            platform = "eBay"
+        else:
+            platform = "Tienda Internacional"
+
+        # Determinación de peso estimado según categoría
+        if "Bisuteria" in category_q:
+            weight = 0.2
+        elif "Tecnologia" in category_q:
+            weight = 0.8
+        elif "Ropa" in category_q:
+            weight = 0.5
+        else:
+            weight = 1.0
+
+        # Cálculo financiero dinámico real
+        shipping_fee = weight * 15.0  # Flete aproximado $15 USD/kg desde casillero Miami
+        subtotal_base = (origin_price * quantity_q)
         
-        st.success("¡Cotización Generada!")
-        st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
-        st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
+        # Estructura de importación (Costo base + Flete + Gastos Operativos y Margen Comercial)
+        final_price_usd = (subtotal_base + shipping_fee) * 1.30  # 30% Margen operativo e importación
+        final_price_ves = final_price_usd * st.session_state.bcv_rate
+
+        st.success(f"¡Cotización calculada exitosamente para **{platform}**!")
         
-        if st.button("Guardar en mi Panel"):
+        st.markdown(f"""
+        ### 📊 Desglose de Importación:
+        * **Plataforma Origen:** `{platform}`
+        * **Monto Base del Producto:** ${subtotal_base:.2f} USD (${origin_price:.2f} x {quantity_q} ud.)
+        * **Estimación de Flete Internacional:** ${shipping_fee:.2f} USD (Peso aprox: {weight} kg)
+        ---
+        ### 💵 Total Estimado a Pagar:
+        * **Total en USD:** **${final_price_usd:.2f} USD**
+        * 🇻🇪 **Total Exacto en Bolívares (Tasa BCV {st.session_state.bcv_rate:.2f}):** **Bs. {final_price_ves:,.2f}**
+        """)
+
+        if st.button("Guardar Cotización en mi Panel"):
             st.session_state.quotes.append({
-                "platform": platform, 
-                "total": final_price, 
+                "platform": platform,
+                "url": product_url,
+                "total_usd": final_price_usd,
+                "total_ves": final_price_ves,
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
-            st.info("Cotización guardada.")
+            st.info("Cotización guardada exitosamente.")
 
 # ----------------- VISTA 4: CARRITO, PAGO Y PASARELA BCV -----------------
 elif menu == "🛒 Carrito de Compras":
