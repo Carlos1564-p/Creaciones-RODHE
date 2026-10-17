@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import urllib.parse
 import os
+import json
 
 # Configuración de la página
 st.set_page_config(
@@ -11,6 +12,25 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ----------------- PERSISTENCIA DE TASA BCV 24/7 -----------------
+BCV_FILE = "bcv_config.json"
+
+def load_bcv_rate():
+    """Carga la tasa BCV guardada de forma persistente en disco."""
+    if os.path.exists(BCV_FILE):
+        try:
+            with open(BCV_FILE, "r") as f:
+                data = json.load(f)
+                return float(data.get("rate", 36.50))
+        except Exception:
+            return 36.50
+    return 36.50
+
+def save_bcv_rate(rate):
+    """Guarda la tasa BCV de forma permanente en disco."""
+    with open(BCV_FILE, "w") as f:
+        json.dump({"rate": float(rate)}, f)
 
 # ----------------- PERSISTENCIA DE BASE DE DATOS LOCAL (CSV) -----------------
 DB_FILE = "ventas_rodhe.csv"
@@ -133,9 +153,9 @@ if 'quotes' not in st.session_state:
 if 'admin_logged' not in st.session_state:
     st.session_state.admin_logged = False
 if 'bcv_rate' not in st.session_state:
-    st.session_state.bcv_rate = 36.50  # Tasa BCV inicial configurable por administrador
+    st.session_state.bcv_rate = load_bcv_rate()
 
-# CATÁLOGO EXACTO DE 50 PRODUCTOS CON ESTRUCTURA FINANCIERA REAL
+# CATÁLOGO DE 50 PRODUCTOS
 if 'products' not in st.session_state:
     st.session_state.products = [
         # --- 25 BISUTERÍA ---
@@ -201,7 +221,7 @@ with st.sidebar:
         st.markdown("### 💎 Creaciones Rodhe")
     
     st.markdown("**Plataforma Digital de Lujo**")
-    st.info(f"📊 Tasa BCV Actual: **{st.session_state.bcv_rate:.2f} VES/USD**")
+    st.info(f"📊 Tasa BCV Oficial: **{st.session_state.bcv_rate:.2f} VES/USD**")
     st.markdown("---")
 
 menu = st.sidebar.radio("Menú Principal", [
@@ -210,13 +230,14 @@ menu = st.sidebar.radio("Menú Principal", [
     "📦 Cotizador Shein / Amazon", 
     "🛒 Carrito de Compras", 
     "📋 Mis Pedidos y Estatus", 
+    "🏢 Sobre Nosotros (Misión & Visión)",
     "🔐 Panel de Administración"
 ])
 
 # ----------------- VISTA 1: CATÁLOGO Y TIENDA -----------------
 if menu == "🛍️ Catálogo y Tienda":
     st.title("💎 Catálogo Exclusivo (50 Artículos - Bisutería & Tecnología)")
-    st.markdown("Precios reales optimizados (Incluye márgenes comerciales 40-50% / 25-35%, flete internacional Miami-Venezuela, costos operativos de la app y marketing digital).")
+    st.markdown("Explora nuestra selección curada de alta rotación con precios transparentes en USD y Bolívares a tasa oficial BCV.")
     
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -288,17 +309,19 @@ elif menu == "📦 Cotizador Shein / Amazon":
         base_price = 24.99 if "amazon" in product_url.lower() else 8.50
         weight = 0.3 if category_q == "Bisuteria" else 1.2
         shipping_fee = weight * 20.0
-        final_price = ((base_price * quantity_q) + shipping_fee) * 1.35
+        final_price_usd = ((base_price * quantity_q) + shipping_fee) * 1.35
+        final_price_ves = final_price_usd * st.session_state.bcv_rate
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
-        st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
+        st.markdown(f"### **Total Estimado en USD:** ${final_price_usd:.2f} USD")
+        st.markdown(f"### **Total Exacto en Bolívares (Tasa BCV {st.session_state.bcv_rate:.2f}):** Bs. {final_price_ves:,.2f}")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({
                 "platform": platform, 
-                "total": final_price, 
+                "total": final_price_usd, 
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
             st.info("Cotización guardada.")
@@ -463,7 +486,51 @@ elif menu == "📋 Mis Pedidos y Estatus":
 
     render_warranty_footer()
 
-# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y TASA BCV -----------------
+# ----------------- VISTA 6: SOBRE NOSOTROS (MISIÓN, VISIÓN Y OBJETIVO) -----------------
+elif menu == "🏢 Sobre Nosotros (Misión & Visión)":
+    st.title("💎 Creaciones Rodhe | Nuestra Identidad Corporativa")
+    st.markdown("Conoce el motor que impulsa nuestra plataforma de comercio electrónico e importación de alta gama en Venezuela.")
+    
+    st.markdown("---")
+    
+    col_a, col_b, col_c = st.columns([1, 2, 1])
+    with col_b:
+        try:
+            st.image("logo.png", use_container_width=True)
+        except Exception:
+            st.image("https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=600&q=80", use_container_width=True)
+            st.caption("Creaciones Rodhe - Estilo y Confianza")
+
+    st.markdown("---")
+    
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        st.subheader("🎯 Misión")
+        st.write("""
+        Proveer a nuestros clientes y aliados comerciales en Venezuela acceso inmediato a un catálogo exclusivo y curado de bisutería de lujo y tecnología innovadora, conectando de forma directa las principales tendencias globales (Shein, Alibaba, Amazon) con la comodidad del mercado local a través de pasarelas de pago seguras y envíos nacionales garantizados.
+        """)
+        
+        st.subheader("🚀 Objetivo Principal")
+        st.write("""
+        Consolidarnos como la plataforma híbrida b2c y b2b líder en importación y comercio digital en el estado Yaracuy y todo el territorio nacional, ofreciendo una experiencia de compra sin fricciones, con soporte de abono flexible y transparencia financiera total a tasa BCV.
+        """)
+        
+    with col_m2:
+        st.subheader("👁️ Visión")
+        st.write("""
+        Ser reconocidos como el referente nacional en innovación digital para emprendedores y revendedores, destacando por nuestra excelencia logística, control de calidad riguroso desde origen en Miami (SEU-62819) y un modelo de negocio altamente rentable y confiable.
+        """)
+        
+        st.subheader("💡 Valores Corporativos")
+        st.write("""
+        * **Confianza y Transparencia:** Tasas oficiales BCV actualizadas y precios claros.
+        * **Compromiso:** Garantía directa de 7 días y soporte personalizado por WhatsApp.
+        * **Innovación:** Cotizadores inteligentes y tecnología adaptada al mercado venezolano.
+        """)
+        
+    render_warranty_footer()
+
+# ----------------- VISTA 7: PANEL DE ADMINISTRACIÓN Y TASA BCV -----------------
 elif menu == "🔐 Panel de Administración":
     st.title("🔐 Panel de Control Administrativo & Tasa BCV")
     
@@ -483,17 +550,18 @@ elif menu == "🔐 Panel de Administración":
             
         st.markdown("---")
         
-        # --- MÓDULO DE ACTUALIZACIÓN DE TASA BCV ---
-        st.subheader("💱 Actualizador de Tasa de Cambio BCV")
-        st.markdown(f"Tasa activa actual: **{st.session_state.bcv_rate:.2f} VES / USD**")
+        # --- MÓDULO DE ACTUALIZACIÓN DE TASA BCV 24/7 ---
+        st.subheader("💱 Actualizador Permanente de Tasa BCV")
+        st.markdown(f"Tasa activa actual en el sistema: **{st.session_state.bcv_rate:.2f} VES / USD**")
         
         with st.form("bcv_update_form"):
             new_bcv = st.number_input("Nueva Tasa Oficial BCV (VES por 1 USD)", min_value=1.00, value=float(st.session_state.bcv_rate), step=0.10)
-            submit_bcv = st.form_submit_button("Actualizar Tasa BCV en la Tienda")
+            submit_bcv = st.form_submit_button("Actualizar y Guardar Tasa BCV (24/7)")
             
             if submit_bcv:
                 st.session_state.bcv_rate = new_bcv
-                st.success(f"¡Tasa BCV actualizada exitosamente a {new_bcv:.2f} VES/USD!")
+                save_bcv_rate(new_bcv)
+                st.success(f"¡Tasa BCV actualizada y guardada permanentemente a {new_bcv:.2f} VES/USD!")
                 st.rerun()
 
         st.markdown("---")
