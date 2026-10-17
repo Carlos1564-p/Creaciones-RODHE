@@ -84,32 +84,10 @@ def render_warranty_footer():
     * **Logística Inversa:** Los retornos por cambio de opinión corren por cuenta del comprador; las sustituciones por errores de despacho o defectos verificados son cubiertas al 100% por Creaciones Rodhe.
     """)
 
-# ----------------- POOLS DE IMÁGENES ROTATIVAS -----------------
-JEWELRY_POOL = [
-    "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1611591475759-33534d119fdc?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80"
-]
-
-TECH_POOL = [
-    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1609592424104-14d2e5d84c2a?auto=format&fit=crop&w=500&q=80",
-    "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=500&q=80"
-]
-
-def get_daily_product_image(category, index):
-    day_offset = datetime.now().timetuple().tm_yday
-    pool = JEWELRY_POOL if category == "Bisuteria" else TECH_POOL
-    return pool[(index + day_offset) % len(pool)]
-
 # ----------------- FUNCIÓN DE BOTÓN WHATSAPP -----------------
 def create_whatsapp_button(phone_number, customer_name, order_id, total, amount_paid, payment_mode, reference, state, courier):
     balance = total - amount_paid
-    msg_payment = f"Pago Total (100%): *${total:.2f} USD*" if payment_mode == "Pago Total (100%)" else f"Abono (50%): *${amount_paid:.2f} USD* (Restante:${balance:.2f} USD)"
+    msg_payment = f"Pago Total (100%): *${total:.2f} USD*" if payment_mode == "Pago Total (100%)" else f"Abono (50%): *${amount_paid:.2f} USD* (Restante: ${balance:.2f} USD)"
     
     message = (
         f"¡Hola {customer_name}! 💎 Gracias por confiar en *Creaciones Rodhe*.\n\n"
@@ -152,73 +130,73 @@ if 'quotes' not in st.session_state:
 if 'admin_logged' not in st.session_state:
     st.session_state.admin_logged = False
 
-# CATÁLOGO AMPLIADO A 50 PRODUCTOS (25 Bisutería + 25 Tecnología)
+# CATÁLOGO EXACTO DE 50 PRODUCTOS CON IMÁGENES Y VIDEOS ESPECÍFICOS Y CORRESPONDIENTES
 if 'products' not in st.session_state:
     st.session_state.products = [
         # --- 25 BISUTERÍA ---
-        {"id": 1, "name": "Set Cadenas Minimalistas Acero", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 12.0, "price_wholesale": 8.5, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 2, "name": "Anillos Apilables Zirconias (Set x5)", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 3, "name": "Pulsera Estilo Cartier Baño Oro 18k", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 4, "name": "Zarcillos Huggies Brillantes", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 60, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 5, "name": "Kit Emprendedor Bisutería (20 pzas)", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 65.0, "price_wholesale": 48.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 6, "name": "Collar Ojo Turco con Circones", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 14.0, "price_wholesale": 9.5, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 7, "name": "Tobillera Doble en Acero Inoxidable", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 7.0, "price_wholesale": 4.5, "stock": 45, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 8, "name": "Gargantilla Choker de Lujo", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 22.0, "price_wholesale": 15.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 9, "name": "Pulseras de Hilo con Dijes de Plata", "category": "Bisuteria", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 6.0, "price_wholesale": 3.8, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 10, "name": "Set Anillos Midi Boho Chic", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 9.0, "price_wholesale": 6.0, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 11, "name": "Reloj Dama Elegante Acero Rosé", "category": "Bisuteria", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 35.0, "price_wholesale": 26.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 12, "name": "Aretes Largos de Fiesta con Cristales", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 11.0, "price_wholesale": 7.5, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 13, "name": "Colgante Letra Inicial Personalizada", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 10.0, "price_wholesale": 6.8, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 14, "name": "Pulsera Tenis con Cristales Austríacos", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 28.0, "price_wholesale": 20.0, "stock": 18, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 15, "name": "Set Anillos de Pareja Ajustables", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.5, "price_wholesale": 5.5, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 16, "name": "Broche de Solapa Perlas y Zirconias", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 12.0, "price_wholesale": 8.0, "stock": 22, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 17, "name": "Anillo Solitario de Compromiso Baño Oro", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 30.0, "price_wholesale": 22.0, "stock": 12, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 18, "name": "Zarcillos Pequeños Geometricos Acero", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 5.0, "price_wholesale": 3.0, "stock": 60, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 19, "name": "Cadena de Cuerpo (Body Chain) Playa", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 15.0, "price_wholesale": 10.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 20, "name": "Pulseras Magnéticas del Amor (Par)", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 9.99, "price_wholesale": 6.5, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 21, "name": "Collar Multicapas con Monedas", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 13.0, "price_wholesale": 9.0, "stock": 28, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 22, "name": "Juego de Joyas de Novia Completo", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 45.0, "price_wholesale": 32.0, "stock": 8, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 23, "name": "Anillo Giratorio Antiestrés Acero", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 11.0, "price_wholesale": 7.2, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 24, "name": "Zarcillos Enhebrados Cadena Larga", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 6.5, "price_wholesale": 4.0, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 25, "name": "Tobillera con Dijes de Cristales", "category": "Bisuteria", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 7.5, "price_wholesale": 4.8, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 1, "name": "Set Cadenas Minimalistas Acero", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 12.0, "price_wholesale": 8.5, "stock": 50, "image_url": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 2, "name": "Anillos Apilables Zirconias (Set x5)", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 40, "image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 3, "name": "Pulsera Estilo Cartier Baño Oro 18k", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 25, "image_url": "https://images.unsplash.com/photo-1611591475759-33534d119fdc?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 4, "name": "Zarcillos Huggies Brillantes", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 60, "image_url": "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 5, "name": "Kit Emprendedor Bisutería (20 pzas)", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 65.0, "price_wholesale": 48.0, "stock": 15, "image_url": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 6, "name": "Collar Ojo Turco con Circones", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 14.0, "price_wholesale": 9.5, "stock": 35, "image_url": "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 7, "name": "Tobillera Doble en Acero Inoxidable", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 7.0, "price_wholesale": 4.5, "stock": 45, "image_url": "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 8, "name": "Gargantilla Choker de Lujo", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 22.0, "price_wholesale": 15.0, "stock": 20, "image_url": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 9, "name": "Pulseras de Hilo con Dijes de Plata", "category": "Bisuteria", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 6.0, "price_wholesale": 3.8, "stock": 50, "image_url": "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 10, "name": "Set Anillos Midi Boho Chic", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 9.0, "price_wholesale": 6.0, "stock": 30, "image_url": "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 11, "name": "Reloj Dama Elegante Acero Rosé", "category": "Bisuteria", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 35.0, "price_wholesale": 26.0, "stock": 15, "image_url": "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 12, "name": "Aretes Largos de Fiesta con Cristales", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 11.0, "price_wholesale": 7.5, "stock": 25, "image_url": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 13, "name": "Colgante Letra Inicial Personalizada", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 10.0, "price_wholesale": 6.8, "stock": 40, "image_url": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 14, "name": "Pulsera Tenis con Cristales Austríacos", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 28.0, "price_wholesale": 20.0, "stock": 18, "image_url": "https://images.unsplash.com/photo-1611591475759-33534d119fdc?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 15, "name": "Set Anillos de Pareja Ajustables", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.5, "price_wholesale": 5.5, "stock": 30, "image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 16, "name": "Broche de Solapa Perlas y Zirconias", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 12.0, "price_wholesale": 8.0, "stock": 22, "image_url": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 17, "name": "Anillo Solitario de Compromiso Baño Oro", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 30.0, "price_wholesale": 22.0, "stock": 12, "image_url": "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 18, "name": "Zarcillos Pequeños Geometricos Acero", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 5.0, "price_wholesale": 3.0, "stock": 60, "image_url": "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 19, "name": "Cadena de Cuerpo (Body Chain) Playa", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 15.0, "price_wholesale": 10.0, "stock": 20, "image_url": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 20, "name": "Pulseras Magnéticas del Amor (Par)", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 9.99, "price_wholesale": 6.5, "stock": 35, "image_url": "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 21, "name": "Collar Multicapas con Monedas", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 13.0, "price_wholesale": 9.0, "stock": 28, "image_url": "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 22, "name": "Juego de Joyas de Novia Completo", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 45.0, "price_wholesale": 32.0, "stock": 8, "image_url": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 23, "name": "Anillo Giratorio Antiestrés Acero", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 11.0, "price_wholesale": 7.2, "stock": 30, "image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 24, "name": "Zarcillos Enhebrados Cadena Larga", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 6.5, "price_wholesale": 4.0, "stock": 40, "image_url": "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 25, "name": "Tobillera con Dijes de Cristales", "category": "Bisuteria", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 7.5, "price_wholesale": 4.8, "stock": 35, "image_url": "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
 
         # --- 25 TECNOLOGÍA ---
-        {"id": 26, "name": "Smartwatch Deportivo Ultra Serie 8", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 27, "name": "Audífonos Inalámbricos TWS Pro ANC", "category": "Tecnologia", "origin": "eBay", "tag": "En Oferta", "price_retail": 15.0, "price_wholesale": 10.5, "stock": 45, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 28, "name": "Aro de Luz LED 10' con Trípode Studio", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Rotación", "price_retail": 22.0, "price_wholesale": 16.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 29, "name": "Power Bank Carga Rápida 20,000mAh", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 28.0, "price_wholesale": 21.0, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 30, "name": "Cargador Rápido USB-C GaN 65W", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 31, "name": "Mini Impresora Térmica Portátil Bluetooth", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 32.0, "price_wholesale": 24.0, "stock": 18, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 32, "name": "Gimbal Estabilizador para Smartphone L08", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 45.0, "price_wholesale": 34.0, "stock": 12, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 33, "name": "Lámpara de Escritorio LED con Carga Inalámbrica", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 30.0, "price_wholesale": 22.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 34, "name": "Cable Magnético 3 en 1 Carga Rápida", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 6.0, "price_wholesale": 3.8, "stock": 70, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 35, "name": "Soporte Magnético de Auto con Carga Qi", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 18.0, "price_wholesale": 12.5, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 36, "name": "Bocina Bluetooth Portátil Impermeable IPX7", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 24.0, "price_wholesale": 17.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 37, "name": "Smart Glasses con Audio Bluetooth", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Gama", "price_retail": 55.0, "price_wholesale": 42.0, "stock": 10, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 38, "name": "Kit de Limpieza 7 en 1 para Gadgets", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 39, "name": "Hub USB-C 5 en 1 Multipuerto Adaptador", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 22.0, "price_wholesale": 15.5, "stock": 22, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 40, "name": "Cámara de Seguridad WiFi Mini 1080p", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Gama", "price_retail": 26.0, "price_wholesale": 19.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 41, "name": "Micrófono Lavalier Inalámbrico Dual", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 35.0, "price_wholesale": 27.0, "stock": 16, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 42, "name": "Reloj Inteligente Infantil con GPS Q12", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 43, "name": "Teclado y Mouse Inalámbrico Ergonómico Slim", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 38.0, "price_wholesale": 28.0, "stock": 12, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 44, "name": "Organizador de Cables de Viaje Impermeable", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 9.0, "price_wholesale": 5.8, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 45, "name": "Proyector LED Portátil Mini HD 1080p", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 85.0, "price_wholesale": 68.0, "stock": 6, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 46, "name": "Soporte Plegable de Aluminio para Laptop", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 16.0, "price_wholesale": 11.0, "stock": 28, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 47, "name": "Control de Juegos Bluetooth para Móvil", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 18, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 48, "name": "Localizador Bluetooth Anti-Pérdida Smart Tag", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 49, "name": "Ventilador Portátil de Cuello Recargable", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 14.0, "price_wholesale": 9.5, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 50, "name": "Estación de Carga Inalámbrica 3 en 1 MagSafe", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 40.0, "price_wholesale": 30.0, "stock": 14, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"}
+        {"id": 26, "name": "Smartwatch Deportivo Ultra Serie 8", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 30, "image_url": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 27, "name": "Audífonos Inalámbricos TWS Pro ANC", "category": "Tecnologia", "origin": "eBay", "tag": "En Oferta", "price_retail": 15.0, "price_wholesale": 10.5, "stock": 45, "image_url": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 28, "name": "Aro de Luz LED 10' con Trípode Studio", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Rotación", "price_retail": 22.0, "price_wholesale": 16.0, "stock": 20, "image_url": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 29, "name": "Power Bank Carga Rápida 20,000mAh", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 28.0, "price_wholesale": 21.0, "stock": 35, "image_url": "https://images.unsplash.com/photo-1609592424104-14d2e5d84c2a?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 30, "name": "Cargador Rápido USB-C GaN 65W", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "image_url": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 31, "name": "Mini Impresora Térmica Portátil Bluetooth", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 32.0, "price_wholesale": 24.0, "stock": 18, "image_url": "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 32, "name": "Gimbal Estabilizador para Smartphone L08", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 45.0, "price_wholesale": 34.0, "stock": 12, "image_url": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 33, "name": "Lámpara de Escritorio LED con Carga Inalámbrica", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 30.0, "price_wholesale": 22.0, "stock": 15, "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 34, "name": "Cable Magnético 3 en 1 Carga Rápida", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 6.0, "price_wholesale": 3.8, "stock": 70, "image_url": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 35, "name": "Soporte Magnético de Auto con Carga Qi", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 18.0, "price_wholesale": 12.5, "stock": 30, "image_url": "https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 36, "name": "Bocina Bluetooth Portátil Impermeable IPX7", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 24.0, "price_wholesale": 17.0, "stock": 25, "image_url": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 37, "name": "Smart Glasses con Audio Bluetooth", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Gama", "price_retail": 55.0, "price_wholesale": 42.0, "stock": 10, "image_url": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 38, "name": "Kit de Limpieza 7 en 1 para Gadgets", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 50, "image_url": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 39, "name": "Hub USB-C 5 en 1 Multipuerto Adaptador", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 22.0, "price_wholesale": 15.5, "stock": 22, "image_url": "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 40, "name": "Cámara de Seguridad WiFi Mini 1080p", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Gama", "price_retail": 26.0, "price_wholesale": 19.0, "stock": 20, "image_url": "https://images.unsplash.com/photo-1557324232-b8917d7c3dcb?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 41, "name": "Micrófono Lavalier Inalámbrico Dual", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 35.0, "price_wholesale": 27.0, "stock": 16, "image_url": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 42, "name": "Reloj Inteligente Infantil con GPS Q12", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "image_url": "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 43, "name": "Teclado y Mouse Inalámbrico Ergonómico Slim", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 38.0, "price_wholesale": 28.0, "stock": 12, "image_url": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 44, "name": "Organizador de Cables de Viaje Impermeable", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 9.0, "price_wholesale": 5.8, "stock": 40, "image_url": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 45, "name": "Proyector LED Portátil Mini HD 1080p", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 85.0, "price_wholesale": 68.0, "stock": 6, "image_url": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 46, "name": "Soporte Plegable de Aluminio para Laptop", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 16.0, "price_wholesale": 11.0, "stock": 28, "image_url": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 47, "name": "Control de Juegos Bluetooth para Móvil", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 18, "image_url": "https://images.unsplash.com/photo-1612287233002-b1d0ba1395c0?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 48, "name": "Localizador Bluetooth Anti-Pérdida Smart Tag", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 50, "image_url": "https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 49, "name": "Ventilador Portátil de Cuello Recargable", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 14.0, "price_wholesale": 9.5, "stock": 35, "image_url": "https://images.unsplash.com/photo-1584467735871-8e853e8563d7?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 50, "name": "Estación de Carga Inalámbrica 3 en 1 MagSafe", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 40.0, "price_wholesale": 30.0, "stock": 14, "image_url": "https://images.unsplash.com/photo-1622445275574-55bc73c574db?auto=format&fit=crop&w=500&q=80", "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"}
     ]
 
 # ----------------- BARRA LATERAL (LOGO Y MENÚ) -----------------
 with st.sidebar:
     try:
         st.image("logo.png", width=120)
-    except:
+    except Exception:
         st.markdown("### 💎 Creaciones Rodhe")
     
     st.markdown("**Plataforma Digital de Lujo**")
-    st.caption(f"📅 50 Productos Activos en Catálogo")
+    st.caption("📅 50 Productos con Imagen Exacta")
     st.markdown("---")
 
 menu = st.sidebar.radio("Menú Principal", [
@@ -245,7 +223,6 @@ if menu == "🛍️ Catálogo y Tienda":
 
     is_wholesale = "Mayor" in pricing_mode
     
-    # Filtrado dinámico
     filtered_products = st.session_state.products
     if selected_cat != "Todas":
         filtered_products = [p for p in filtered_products if p["category"] == selected_cat]
@@ -256,10 +233,11 @@ if menu == "🛍️ Catálogo y Tienda":
     
     cols = st.columns(3)
     for index, product in enumerate(filtered_products):
-        daily_image = get_daily_product_image(product["category"], product["id"])
+        # USAMOS LA IMAGEN ESPECÍFICA ASIGNADA A CADA PRODUCTO
+        product_image = product.get("image_url", "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80")
         
         with cols[index % 3]:
-            st.image(daily_image, use_container_width=True)
+            st.image(product_image, use_container_width=True)
             st.subheader(product["name"])
             st.markdown(f"🏷️ **Origen:** `{product['origin']}` | ⚡ **Tag:** `{product['tag']}`")
             
@@ -271,7 +249,7 @@ if menu == "🛍️ Catálogo y Tienda":
                 st.video(product.get("video_url", "https://www.w3schools.com/html/mov_bbb.mp4"))
                 st.caption("Demostración real en alta calidad.")
             
-            if st.button(f"Agregar al Carrito", key=f"add_{product['id']}"):
+            if st.button("Agregar al Carrito", key=f"add_{product['id']}"):
                 st.session_state.cart.append({
                     "id": product["id"],
                     "name": product["name"],
@@ -280,6 +258,12 @@ if menu == "🛍️ Catálogo y Tienda":
                     "mode": "Mayor" if is_wholesale else "Detal"
                 })
                 st.success(f"¡{product['name']} agregado!")
+
+# ----------------- VISTA 2: TIENDAS ALIADAS (AL MAYOR) -----------------
+elif menu == "🤝 Tiendas Aliadas (Al Mayor)":
+    st.title("🤝 Módulo de Tiendas Aliadas & Mayoristas")
+    st.markdown("Red de abastecimiento directo para emprendedores y revendedores en Venezuela.")
+    st.info("💡 **Beneficios Mayoristas:** Acceso directo a lotes de alta rotación con tarifas preferenciales y despacho nacional garantizado.")
 
 # ----------------- VISTA 3: COTIZADOR INTERNACIONAL -----------------
 elif menu == "📦 Cotizador Shein / Amazon":
@@ -301,12 +285,15 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        # LÍNEA 310 CORREGIDA:
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
-            st.session_state.quotes.append({"platform": platform, "total": final_price, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
+            st.session_state.quotes.append({
+                "platform": platform, 
+                "total": final_price, 
+                "date": datetime.now().strftime("%Y-%m-%d %H:%M")
+            })
             st.info("Cotización guardada.")
 
 # ----------------- VISTA 4: CARRITO, PAGO Y OPCIÓN DE ABONO -----------------
@@ -367,7 +354,7 @@ elif menu == "🛒 Carrito de Compras":
             ])
             
             if payment_method == "Pago Móvil - Banca Amiga":
-                st.success(f"""
+                st.success("""
                 📱 **Datos Pago Móvil (Banca Amiga):**
                 - **Cédula / RIF:** V-14242461
                 - **Teléfono:** 04244581437
@@ -460,7 +447,7 @@ elif menu == "📋 Mis Pedidos y Estatus":
 
     render_warranty_footer()
 
-# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y GESTIÓN DE VIDEOS -----------------
+# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN -----------------
 elif menu == "🔐 Panel de Administración":
     st.title("🔐 Panel de Control Administrativo & Gestión Multimedia")
     
@@ -481,15 +468,17 @@ elif menu == "🔐 Panel de Administración":
         st.markdown("---")
         
         st.subheader("📹 Editor de Videos Reales (Reels del Catálogo de 50 Artículos)")
+        
+        prod_options = [p["id"] for p in st.session_state.products]
         selected_prod_id = st.selectbox(
             "Seleccionar Producto del Catálogo", 
-            options=[p["id"] for p in st.session_state.products],
-            format_func=lambda x: next(f"ID {p['id']} - {p['name']} ({p['origin']})" for p in st.session_state.products if p["id"] == x)
+            options=prod_options,
+            format_func=lambda pid: next(f"ID {p['id']} - {p['name']} ({p['origin']})" for p in st.session_state.products if p["id"] == pid)
         )
         
         prod_to_edit = next(p for p in st.session_state.products if p["id"] == selected_prod_id)
         
-        with st.form(f"edit_video_form_{selected_prod_id}"):
+        with st.form(key=f"edit_video_form_{selected_prod_id}"):
             current_video = prod_to_edit.get("video_url", "")
             new_video_url = st.text_input("URL del Video Real (Enlace MP4 o Reel)", value=current_video)
             submit_video_edit = st.form_submit_button("Actualizar Video del Producto")
@@ -502,10 +491,106 @@ elif menu == "🔐 Panel de Administración":
         st.markdown("---")
         st.subheader("📊 Base de Datos General (Almacenamiento Permanente por Fecha)")
         
-        # LÍNEA CORREGIDA AQUÍ ABAJO:
         paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
         
         if not paid_orders:
             st.info("No hay pedidos pagados y verificados registrados en el sistema actualmente.")
         else:
             st.metric("Total Histórico de Pedidos Pagados", len(paid_orders))
+            
+            report_data = []
+            for order in paid_orders:
+                c_name = order.get('client_name', 'Cliente General')
+                state_dest = order.get('state', 'N/A')
+                municipality_dest = order.get('municipality', 'N/A')
+                courier_dest = order.get('courier', 'N/A')
+                ref_pay = order.get('reference', 'N/A')
+                payment_date = order.get('date_paid', str(datetime.today().date()))
+                pay_mode = order.get('payment_mode', 'Pago Total (100%)')
+                paid_amt = order.get('amount_paid', order['total'])
+                
+                for item in order.get('items', []):
+                    store = item.get('origin', 'Stock Nacional')
+                    price = item.get('price', 0.0)
+                    
+                    if store in ["Shein", "Alibaba"]:
+                        margin = "35% (Pre-pedido)"
+                        delivery_time = "5 a 8 días hábiles"
+                        store_type = "Internacional"
+                    elif store in ["Amazon", "eBay"]:
+                        margin = "30% (Importación)"
+                        delivery_time = "4 a 6 días hábiles"
+                        store_type = "Internacional"
+                    else:
+                        margin = "40% (Stock Local)"
+                        delivery_time = "1 a 3 días (Nacional)"
+                        store_type = "Nacional"
+                        
+                    report_data.append({
+                        "Fecha Pago": payment_date,
+                        "Cliente": c_name,
+                        "Producto": item.get('name'),
+                        "Modo Compra": item.get('mode'),
+                        "Modalidad Pago": pay_mode,
+                        "Monto Pagado ($)": paid_amt,
+                        "Precio Item ($)": price,
+                        "Margen Comercial": margin,
+                        "Proveedor": store,
+                        "Tipo": store_type,
+                        "Estado Destino": state_dest,
+                        "Municipio": municipality_dest,
+                        "Encomienda": courier_dest,
+                        "Referencia": ref_pay
+                    })
+            
+            df_report = pd.DataFrame(report_data)
+            
+            st.markdown("### 📅 Reporte Diario y Filtrado Histórico")
+            report_mode = st.radio("Seleccione el enfoque del reporte:", [
+                "Reporte Diario por Fecha Específica",
+                "Reporte Consolidado General", 
+                "Reporte por Cliente", 
+                "Reporte por Empresa (Nacional / Internacional)", 
+                "Reporte por Producto", 
+                "Reporte por Estado"
+            ], horizontal=True)
+            
+            if report_mode == "Reporte Diario por Fecha Específica":
+                available_dates = sorted(df_report["Fecha Pago"].unique(), reverse=True)
+                selected_date = st.selectbox("Seleccione la Fecha de Compra", available_dates)
+                df_filtered = df_report[df_report["Fecha Pago"] == selected_date]
+                st.markdown(f"#### Compras registradas para el día: `{selected_date}`")
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_mode == "Reporte Consolidado General":
+                st.markdown("#### Historial Completo Acumulado")
+                st.dataframe(df_report, use_container_width=True)
+                
+            elif report_mode == "Reporte por Cliente":
+                selected_client = st.selectbox("Seleccione el Cliente", df_report["Cliente"].unique())
+                df_filtered = df_report[df_report["Cliente"] == selected_client]
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_mode == "Reporte por Empresa (Nacional / Internacional)":
+                selected_type = st.selectbox("Seleccione tipo de empresa / origen", df_report["Tipo"].unique())
+                df_filtered = df_report[df_report["Tipo"] == selected_type]
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_mode == "Reporte por Producto":
+                selected_prod = st.selectbox("Seleccione el Producto", df_report["Producto"].unique())
+                df_filtered = df_report[df_report["Producto"] == selected_prod]
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_mode == "Reporte por Estado":
+                selected_st = st.selectbox("Seleccione el Estado de Destino", df_report["Estado Destino"].unique())
+                df_filtered = df_report[df_report["Estado Destino"] == selected_st]
+                st.dataframe(df_filtered, use_container_width=True)
+            
+            st.markdown("---")
+            csv_export = df_report.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Descargar Base de Datos Histórica en CSV",
+                data=csv_export,
+                file_name=f"base_datos_historica_rodhe_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
