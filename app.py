@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import urllib.parse
 
 # Configuración de la página
 st.set_page_config(
@@ -32,6 +33,37 @@ def get_daily_product_image(category, index):
     pool = JEWELRY_POOL if category == "Bisuteria" else TECH_POOL
     return pool[(index + day_offset) % len(pool)]
 
+# ----------------- FUNCIÓN DE BOTÓN WHATSAPP -----------------
+def create_whatsapp_button(phone_number, customer_name, order_id, total):
+    message = (
+        f"¡Hola {customer_name}! 💎 Gracias por confiar en *Creaciones Rodhe*.\n\n"
+        f"Tu pedido *#{order_id}* por un monto de *${total:.2f} USD* ha sido registrado con éxito.\n"
+        f"📦 El tiempo promedio para que tu pedido esté en la puerta de tu casa es de *3 a 5 días hábiles* (según disponibilidad y despacho nacional).\n\n"
+        f"Te mantendremos informado con tu nota de entrega. ¡Estamos a tu orden!"
+    )
+    encoded_message = urllib.parse.quote(message)
+    whatsapp_url = f"https://wa.me/{phone_number}?text={encoded_message}"
+    
+    button_html = f"""
+    <a href="{whatsapp_url}" target="_blank" style="
+        display: inline-block;
+        background-color: #25D366;
+        color: white;
+        padding: 12px 20px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+        margin-top: 10px;
+        margin-bottom: 10px;
+    ">
+        💬 Notificar por WhatsApp al Cliente
+    </a>
+    """
+    return button_html
+
 # ----------------- INICIALIZACIÓN DE ESTADOS -----------------
 if 'cart' not in st.session_state:
     st.session_state.cart = []
@@ -42,7 +74,7 @@ if 'quotes' not in st.session_state:
 if 'admin_logged' not in st.session_state:
     st.session_state.admin_logged = False
 
-# Catálogo con origen detallado (Shein, Alibaba, Local, etc.)
+# Catálogo con origen detallado
 if 'products' not in st.session_state:
     st.session_state.products = [
         {"id": 1, "name": "Set de Cadenas Minimalistas Acero Quirúrgico", "category": "Bisuteria", "origin": "Shein", "price_retail": 12.0, "price_wholesale": 8.5, "stock": 50},
@@ -59,7 +91,6 @@ if 'products' not in st.session_state:
 
 # ----------------- BARRA LATERAL (LOGO Y MENÚ) -----------------
 with st.sidebar:
-    # Si tienes tu logo en la carpeta, puedes cambiar "logo.png" por tu archivo real
     try:
         st.image("logo.png", width=120)
     except:
@@ -81,7 +112,7 @@ menu = st.sidebar.radio("Menú Principal", [
 # ----------------- VISTA 1: CATÁLOGO Y TIENDA -----------------
 if menu == "🛍️ Catálogo y Tienda":
     st.title("💎 Catálogo Exclusivo - Creaciones Rodhe")
-    st.markdown("Explora nuestra selección identificando el **origen del producto** (Stock Nacional o importado directamente de plataformas globales).")
+    st.markdown("Explora nuestra selección identificando el **origen del producto** (Stock Nacional o importado de plataformas globales).")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -102,9 +133,6 @@ if menu == "🛍️ Catálogo y Tienda":
         with cols[index % 3]:
             st.image(daily_image, use_container_width=True)
             st.subheader(product["name"])
-            
-            # Badge de Origen
-            origin_color = "blue" if product["origin"] == "Stock Nacional" else "orange"
             st.markdown(f"🏷️ **Origen / Proveedor:** `{product['origin']}`")
             
             price = product["price_wholesale" if is_wholesale else "price_retail"]
@@ -136,15 +164,15 @@ elif menu == "🤝 Tiendas Aliadas (Al Mayor)":
     with col_a:
         st.subheader("🌐 Aliados Internacionales directos")
         st.markdown("""
-        - **Shein Partner Hub:** Acceso a catálogos masivos de moda y accesorios con tiempos de nacionalización express.
-        - **Alibaba Direct Supply:** Compra de lotes tecnológicos e industriales al mejor costo de fábrica.
+        - **Shein Partner Hub:** Acceso a catálogos masivos de moda y accesorios.
+        - **Alibaba Direct Supply:** Compra de lotes tecnológicos e industriales al costo de fábrica.
         - **Amazon / eBay Bulk:** Suministro de gadgets certificados.
         """)
     with col_b:
         st.subheader("📦 Aliados Logísticos en Venezuela")
         st.markdown("""
         - Despachos nacionales asegurados a través de **MRW, Zoom y Tealca**.
-        - Consolidación de carga semanal desde Miami hacia nuestros almacenes principales.
+        - Consolidación de carga semanal desde Miami.
         """)
 
 # ----------------- VISTA 3: COTIZADOR INTERNACIONAL -----------------
@@ -167,7 +195,7 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
@@ -196,7 +224,6 @@ elif menu == "🛒 Carrito de Compras":
             "Efectivo Divisa"
         ])
         
-        # Datos exactos de pago solicitados
         if payment_method == "Pago Móvil - Banca Amiga":
             st.success("""
             📱 **Instrucciones Pago Móvil (Banca Amiga):**
@@ -212,17 +239,34 @@ elif menu == "🛒 Carrito de Compras":
             - **Plataforma:** Transacciones ACH Xpress
             """)
         
+        client_phone = st.text_input("Número de Teléfono del Cliente (Ej: 584144581437 para WhatsApp)")
+
         if st.button("Confirmar Pedido"):
+            new_order_id = len(st.session_state.orders) + 1
             st.session_state.orders.append({
-                "id": len(st.session_state.orders) + 1,
+                "id": new_order_id,
                 "total": total_general,
                 "payment": payment_method,
                 "purchase_note": "Pendiente de verificación de pago.",
                 "delivery_note": "Pendiente guía de envío nacional (MRW/Zoom/Tealca).",
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
+            st.success("¡Pedido registrado exitosamente!")
+            
+            # Botón de WhatsApp integrado
+            if client_phone:
+                st.markdown("### Enviar Notificación al Cliente")
+                whatsapp_btn = create_whatsapp_button(
+                    phone_number=client_phone,
+                    customer_name="Estimado Cliente",
+                    order_id=new_order_id,
+                    total=total_general
+                )
+                st.markdown(whatsapp_btn, unsafe_allow_html=True)
+            else:
+                st.warning("Introduce un número de teléfono arriba para habilitar el botón de WhatsApp automático.")
+            
             st.session_state.cart = []
-            st.success("¡Pedido registrado exitosamente! Revisa 'Mis Pedidos y Estatus'.")
 
 # ----------------- VISTA 5: MIS PEDIDOS -----------------
 elif menu == "📋 Mis Pedidos y Estatus":
