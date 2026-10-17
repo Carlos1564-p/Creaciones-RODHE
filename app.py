@@ -34,13 +34,13 @@ def get_daily_product_image(category, index):
     return pool[(index + day_offset) % len(pool)]
 
 # ----------------- FUNCIÓN DE BOTÓN WHATSAPP -----------------
-def create_whatsapp_button(phone_number, customer_name, order_id, total, reference):
+def create_whatsapp_button(phone_number, customer_name, order_id, total, reference, state, courier):
     message = (
         f"¡Hola {customer_name}! 💎 Gracias por confiar en *Creaciones Rodhe*.\n\n"
         f"Tu pedido *#{order_id}* por un monto de *${total:.2f} USD* ha sido registrado.\n"
-        f"Ref de pago: *{reference}*\n"
+        f"Ref de pago: *{reference}* | Destino: *{state}* vía *{courier}*\n"
         f"📦 El tiempo promedio para que tu pedido esté en la puerta de tu casa es de *3 a 5 días hábiles*.\n\n"
-        f"Te mantendremos informado. ¡Estamos a tu orden!"
+        f"Te mantendremos informado con tu nota de entrega. ¡Estamos a tu orden!"
     )
     encoded_message = urllib.parse.quote(message)
     whatsapp_url = f"https://wa.me/{phone_number}?text={encoded_message}"
@@ -93,7 +93,7 @@ if 'products' not in st.session_state:
 # ----------------- BARRA LATERAL (LOGO Y MENÚ) -----------------
 with st.sidebar:
     try:
-        st.image("logorode.jpg", width=120)
+        st.image("logo.png", width=120)
     except:
         st.markdown("### 💎 Creaciones Rodhe")
     
@@ -180,17 +180,16 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        # LÍNEA CORREGIDA AQUÍ ABAJO:
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({"platform": platform, "total": final_price, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
             st.info("Cotización guardada.")
 
-# ----------------- VISTA 4: CARRITO, PAGO Y REGISTRO DE REFERENCIA -----------------
+# ----------------- VISTA 4: CARRITO, PAGO Y DATOS DE ENVÍO (ESTADO, MUNICIPIO, MRW) -----------------
 elif menu == "🛒 Carrito de Compras":
-    st.title("🛒 Tu Carrito de Compras y Registro de Pago")
+    st.title("🛒 Tu Carrito de Compras, Envío y Pago Definitivo")
     
     if not st.session_state.cart:
         st.info("Tu carrito está vacío.")
@@ -203,28 +202,45 @@ elif menu == "🛒 Carrito de Compras":
         st.markdown(f"### Total a Pagar: **${total_general:.2f} USD**")
         st.markdown("---")
         
-        st.subheader("1. Selecciona tu Método de Pago")
-        payment_method = st.selectbox("Pasarela", [
-            "Pago Móvil - Banca Amiga", 
-            "Zinli (Ahorro / ACH Xpress)", 
-            "Efectivo Divisa"
-        ])
-        
-        if payment_method == "Pago Móvil - Banca Amiga":
-            st.success("""
-            📱 **Datos Pago Móvil (Banca Amiga):**
-            - **Titular:** Rosa María Pacheco Azuaje | **Teléfono:** 04244581437
-            """)
-        elif payment_method == "Zinli (Ahorro / ACH Xpress)":
-            st.success("""
-            💳 **Datos Zinli / ACH Xpress:**
-            - **Cuenta de Ahorro:** 3-002-05387291-65 | **Titular:** Rosa Pacheco
-            """)
+        st.subheader("1. Datos de Envío y Destino en Venezuela")
+        with st.form("shipping_dest_form"):
+            col_env1, col_env2, col_env3 = st.columns(3)
+            with col_env1:
+                venezuela_states = [
+                    "Yaracuy", "Amazonas", "Anzoátegui", "Apure", "Aragua", "Barinas", 
+                    "Bolívar", "Carabobo", "Cojedes", "Delta Amacuro", "Distrito Capital", 
+                    "Falcón", "Guárico", "Lara", "Mérida", "Miranda", "Monagas", 
+                    "Nueva Esparta", "Portuguesa", "Sucre", "Táchira", "Trujillo", 
+                    "Vargas (La Guaira)", "Yaracuy", "Zulia"
+                ]
+                selected_state = st.selectbox("Estado de Destino", sorted(list(set(venezuela_states))))
+            with col_env2:
+                municipality_input = st.text_input("Municipio / Ciudad", placeholder="Ej. San Felipe")
+            with col_env3:
+                courier_choice = st.selectbox("Empresa de Encomienda", ["MRW", "Zoom", "Tealca", "Domesa"])
             
-        st.markdown("---")
-        st.subheader("2. Registro de Datos de Pago del Cliente")
-        
-        with st.form("payment_register_form"):
+            st.markdown("---")
+            st.subheader("2. Selecciona tu Método de Pago")
+            payment_method = st.selectbox("Pasarela", [
+                "Pago Móvil - Banca Amiga", 
+                "Zinli (Ahorro / ACH Xpress)", 
+                "Efectivo Divisa"
+            ])
+            
+            if payment_method == "Pago Móvil - Banca Amiga":
+                st.success("""
+                📱 **Datos Pago Móvil (Banca Amiga):**
+                - **Titular:** Rosa María Pacheco Azuaje | **Teléfono:** 04244581437
+                """)
+            elif payment_method == "Zinli (Ahorro / ACH Xpress)":
+                st.success("""
+                💳 **Datos Zinli / ACH Xpress:**
+                - **Cuenta de Ahorro:** 3-002-05387291-65 | **Titular:** Rosa Pacheco
+                """)
+                
+            st.markdown("---")
+            st.subheader("3. Registro de Datos de Pago del Cliente")
+            
             col_1, col_2 = st.columns(2)
             with col_1:
                 client_name_input = st.text_input("Nombre y Apellido del Cliente", value="Cliente General")
@@ -234,15 +250,15 @@ elif menu == "🛒 Carrito de Compras":
                 payment_date = st.date_input("Fecha del Pago", value=datetime.today())
                 client_phone = st.text_input("Teléfono del Cliente (Ej: 584144581437 para WhatsApp)")
             
-            submit_payment = st.form_submit_button("Confirmar y Registrar Pedido")
+            submit_payment = st.form_submit_button("Confirmar y Registrar Pedido Definitivo")
 
         if submit_payment:
             if not ref_number:
                 st.error("Por favor, ingresa el número de referencia del pago.")
+            elif not municipality_input:
+                st.error("Por favor, indica el municipio o ciudad de destino.")
             else:
                 new_order_id = len(st.session_state.orders) + 1
-                
-                # Guardar cada ítem del carrito con sus detalles asociados al cliente
                 items_in_order = st.session_state.cart.copy()
                 
                 st.session_state.orders.append({
@@ -254,12 +270,15 @@ elif menu == "🛒 Carrito de Compras":
                     "reference": ref_number,
                     "bank": bank_used,
                     "date_paid": str(payment_date),
+                    "state": selected_state,
+                    "municipality": municipality_input,
+                    "courier": courier_choice,
                     "status": "Pagado y Verificado",
                     "purchase_note": f"Pago verificado - Ref: {ref_number} ({bank_used})",
-                    "delivery_note": "Pendiente guía de envío nacional (MRW/Zoom/Tealca).",
+                    "delivery_note": f"Envío por {courier_choice} hacia {selected_state} ({municipality_input})",
                     "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
                 })
-                st.success("¡Pedido y datos de pago registrados exitosamente en el sistema!")
+                st.success("¡Pedido y datos de envío/pago registrados exitosamente!")
                 
                 if client_phone:
                     st.markdown("### Notificar al Cliente vía WhatsApp")
@@ -268,7 +287,9 @@ elif menu == "🛒 Carrito de Compras":
                         customer_name=client_name_input,
                         order_id=new_order_id,
                         total=total_general,
-                        reference=ref_number
+                        reference=ref_number,
+                        state=selected_state,
+                        courier=courier_choice
                     )
                     st.markdown(whatsapp_btn, unsafe_allow_html=True)
                 
@@ -282,12 +303,13 @@ elif menu == "📋 Mis Pedidos y Estatus":
     else:
         for order in st.session_state.orders:
             st.markdown(f"**Pedido #{order['id']}** | Cliente: **{order.get('client_name', 'N/A')}** | Total: **${order['total']:.2f}**")
-            st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Banco:* {order.get('bank', 'N/A')} | *Estado:* `{order.get('status', 'Pagado')}`")
+            st.markdown(f"📍 *Destino:* {order.get('state')} / {order.get('municipality')} vía `{order.get('courier')}`")
+            st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Estado:* `{order.get('status', 'Pagado')}`")
             st.markdown("---")
 
-# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y REPORTE LOGÍSTICO -----------------
+# ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y REPORTES AVANZADOS -----------------
 elif menu == "🔐 Panel de Administración":
-    st.title("🔐 Panel de Control Administrativo & Reporte Logístico")
+    st.title("🔐 Panel de Control Administrativo & Reportes Logísticos")
     
     if not st.session_state.admin_logged:
         admin_pass = st.text_input("Contraseña de Administrador", type="password")
@@ -304,56 +326,99 @@ elif menu == "🔐 Panel de Administración":
             st.rerun()
             
         st.markdown("---")
-        st.subheader("📊 Base de Datos: Pedidos Pagados Ordenados por Clientes")
+        st.subheader("📊 Base de Datos General de Compras Pagadas")
         
         paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
         
         if not paid_orders:
             st.info("No hay pedidos pagados y verificados registrados en el sistema actualmente.")
         else:
-            st.metric("Total Pedidos Pagados listos para gestión", len(paid_orders))
+            st.metric("Total Pedidos Pagados", len(paid_orders))
             
-            # --- CONSTRUCCIÓN DEL REPORTE DETALLADO PARA COMPRAS INTERNACIONALES ---
-            st.markdown("### ✈️ Reporte Logístico para Compras Internacionales (Shein, Alibaba, etc.)")
-            st.markdown("*Objetivo: Agrupar compras por tienda para ejecución rápida y reducción de tiempos de entrega.*")
-            
+            # --- CONSOLIDACIÓN DE DATOS PARA REPORTES ---
             report_data = []
             for order in paid_orders:
                 c_name = order.get('client_name', 'Cliente General')
+                state_dest = order.get('state', 'N/A')
+                municipality_dest = order.get('municipality', 'N/A')
+                courier_dest = order.get('courier', 'N/A')
+                ref_pay = order.get('reference', 'N/A')
+                
                 for item in order.get('items', []):
-                    # Estimación de margen y tiempo de entrega según la tienda
                     store = item.get('origin', 'Stock Nacional')
                     price = item.get('price', 0.0)
                     
                     if store in ["Shein", "Alibaba"]:
                         margin = "35% (Pre-pedido)"
                         delivery_time = "5 a 8 días hábiles"
+                        store_type = "Internacional"
                     elif store in ["Amazon", "eBay"]:
                         margin = "30% (Importación)"
                         delivery_time = "4 a 6 días hábiles"
+                        store_type = "Internacional"
                     else:
                         margin = "40% (Stock Local)"
-                        delivery_time = "1 a 3 días hábiles (Nacional)"
+                        delivery_time = "1 a 3 días (Nacional)"
+                        store_type = "Nacional"
                         
                     report_data.append({
                         "Cliente": c_name,
                         "Producto": item.get('name'),
                         "Modo": item.get('mode'),
-                        "Precio (USD)": f"${price:.2f}",
+                        "Precio (USD)": price,
                         "Margen Comercial": margin,
                         "Tienda / Proveedor": store,
-                        "Tiempo Estimado de Entrega": delivery_time,
-                        "Referencia Pago": order.get('reference')
+                        "Tipo Empresa": store_type,
+                        "Estado Destino": state_dest,
+                        "Municipio": municipality_dest,
+                        "Encomienda": courier_dest,
+                        "Tiempo Estimado": delivery_time,
+                        "Referencia Pago": ref_pay
                     })
             
             df_report = pd.DataFrame(report_data)
-            st.dataframe(df_report, use_container_width=True)
             
-            # Opción de descarga directa para compras organizadas
+            # --- MÓDULO DE GENERACIÓN DE REPORTES ESPECÍFICOS ---
+            st.markdown("### 🔍 Selector de Reportes Avanzados")
+            report_type = st.selectbox("Seleccione el tipo de reporte a generar:", [
+                "Reporte General Consolidado", 
+                "Reporte por Cliente", 
+                "Reporte por Empresa (Nacional / Internacional)", 
+                "Reporte por Producto", 
+                "Reporte por Estado"
+            ])
+            
+            if report_type == "Reporte General Consolidado":
+                st.markdown("#### Vista General de Todas las Compras")
+                st.dataframe(df_report, use_container_width=True)
+                
+            elif report_type == "Reporte por Cliente":
+                selected_client = st.selectbox("Seleccione el Cliente", df_report["Cliente"].unique())
+                df_filtered = df_report[df_report["Cliente"] == selected_client]
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_type == "Reporte por Empresa (Nacional / Internacional)":
+                selected_type = st.selectbox("Seleccione tipo de empresa / origen", df_report["Tipo Empresa"].unique())
+                df_filtered = df_report[df_report["Tipo Empresa"] == selected_type]
+                st.markdown(f"*Mostrando compras para origen: {selected_type} (Ideal para consolidar pedidos con proveedores)*")
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_type == "Reporte por Producto":
+                selected_prod = st.selectbox("Seleccione el Producto", df_report["Producto"].unique())
+                df_filtered = df_report[df_report["Producto"] == selected_prod]
+                st.dataframe(df_filtered, use_container_width=True)
+                
+            elif report_type == "Reporte por Estado":
+                selected_st = st.selectbox("Seleccione el Estado de Destino", df_report["Estado Destino"].unique())
+                df_filtered = df_report[df_report["Estado Destino"] == selected_st]
+                st.dataframe(df_filtered, use_container_width=True)
+            
+            st.markdown("---")
+            # Botón de descarga CSV del reporte seleccionado o general
             csv_export = df_report.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📥 Descargar Reporte Logístico en CSV para Compras",
+                label="📥 Descargar Base de Datos Completa en CSV para Compras",
                 data=csv_export,
-                file_name=f"reporte_compras_rodhe_{datetime.now().strftime('%Y%m%d')}.csv",
+                file_name=f"reporte_logistico_rodhe_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
