@@ -366,7 +366,49 @@ elif menu == "📦 Cotizador Shein / Amazon":
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
             st.info("Cotización guardada exitosamente.")
+def evaluar_rentabilidad_pedido(p_base, quantity, weight_unit, tarifa_flete=15.0, markup=1.30):
+    """
+    Evalúa si una importación cumple con los parámetros de rentabilidad positiva.
+    """
+    peso_minimo_casillero = 0.5  # El casillero cobra al menos 0.5 kg por gestión
+    costo_operativo_fijo = 1.50  # Empaque, precintos y gestión operativa ($ USD)
+    utilidad_neta_objetivo = 1.00 # Ganancia neta mínima requerida ($ USD)
+    
+    # 1. Calcular peso total aplicando el mínimo del casillero si aplica
+    peso_total_calculado = quantity * weight_unit
+    peso_efectivo = max(peso_total_calculado, peso_minimo_casillero)
+    
+    # 2. Costos directos (Producto + Flete)
+    costo_producto = p_base * quantity
+    costo_flete = peso_efectivo * tarifa_flete
+    costo_directo_total = costo_producto + costo_flete
+    
+    # 3. Precio de venta con el margen comercial
+    precio_venta = costo_directo_total * markup
+    
+    # 4. Utilidad bruta y Utilidad Neta Real
+    utilidad_bruta = precio_venta - costo_directo_total
+    utilidad_neta_real = utilidad_bruta - costo_operativo_fijo
+    
+    # 5. Condición de alerta
+    if utilidad_neta_real < utilidad_neta_objetivo:
+        return {
+            "estado": "ALERTA: NO RENTABLE ❌",
+            "motivo": f"La utilidad neta (${utilidad_neta_real:.2f}) está por debajo del umbral mínimo de ganancia.",
+            "precio_sugerido": precio_venta,
+            "utilidad_neta": utilidad_neta_real
+        }
+    else:
+        return {
+            "estado": "RENTABLE VÁLIDO ✅",
+            "motivo": "La transacción cubre costos fijos y genera ganancia neta positiva.",
+            "precio_sugerido": precio_venta,
+            "utilidad_neta": utilidad_neta_real
+        }
 
+# --- Ejemplo de prueba con un artículo de bajo costo (Ej. Anillo de $1.50 USD y 0.03 kg) ---
+resultado = evaluar_rentabilidad_pedido(p_base=1.50, quantity=1, weight_unit=0.03)
+print(resultado)
 # ----------------- VISTA 4: CARRITO, PAGO Y PASARELA BCV -----------------
 elif menu == "🛒 Carrito de Compras":
     st.title("🛒 Tu Carrito de Compras, Envío y Pasarela BCV")
