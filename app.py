@@ -20,7 +20,6 @@ def load_database():
     if os.path.exists(DB_FILE):
         try:
             df = pd.read_csv(DB_FILE)
-            # Convertir el DataFrame guardado de vuelta al formato de lista de diccionarios de la app
             orders_list = []
             for _, row in df.iterrows():
                 orders_list.append({
@@ -48,8 +47,6 @@ def load_database():
 def save_order_to_disk(new_order):
     """Agrega un nuevo pedido y lo guarda de forma permanente en el archivo CSV."""
     st.session_state.orders.append(new_order)
-    
-    # Preparar datos para tabular y guardar
     data_to_save = []
     for order in st.session_state.orders:
         data_to_save.append({
@@ -71,6 +68,17 @@ def save_order_to_disk(new_order):
         })
     df_save = pd.DataFrame(data_to_save)
     df_save.to_csv(DB_FILE, index=False)
+
+# ----------------- COMPONENTE PIE DE PÁGINA: TÉRMINOS DE GARANTÍA -----------------
+def render_warranty_footer():
+    """Muestra el resumen visual con los términos de garantía en el pie de página."""
+    st.markdown("---")
+    st.info("""
+    🛡️ **Términos de Garantía y Compromiso Rodhe:**
+    * **Stock Nacional:** Todos nuestros productos disponen de **7 días continuos de garantía** por defectos de fábrica tras la recepción del paquete.
+    * **Pre-pedidos Internacionales (Shein, Alibaba, Amazon):** Garantizamos inspección de calidad e integridad desde nuestro casillero en Miami (`SEU-62819`) hasta la entrega a la empresa de encomienda en Venezuela.
+    * **Logística Inversa:** Los retornos por cambio de opinión corren por cuenta del comprador; las sustituciones por errores de despacho o defectos verificados son cubiertas al 100% por Creaciones Rodhe.
+    """)
 
 # ----------------- FUNCIONES DE ROTACIÓN DIARIA DE IMÁGENES -----------------
 JEWELRY_POOL = [
@@ -130,7 +138,7 @@ def create_whatsapp_button(phone_number, customer_name, order_id, total, referen
 if 'cart' not in st.session_state:
     st.session_state.cart = []
 if 'orders' not in st.session_state:
-    st.session_state.orders = load_database()  # Carga persistente desde el CSV
+    st.session_state.orders = load_database()
 if 'quotes' not in st.session_state:
     st.session_state.quotes = []
 if 'admin_logged' not in st.session_state:
@@ -241,8 +249,7 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        # LÍNEA CORREGIDA: se cambió \vert{} por |
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
@@ -341,9 +348,7 @@ elif menu == "🛒 Carrito de Compras":
                     "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
                 }
                 
-                # Guardar de forma persistente en disco
                 save_order_to_disk(new_order_data)
-                
                 st.success("¡Pedido y datos de envío/pago guardados de forma permanente en la base de datos!")
                 
                 if client_phone:
@@ -361,6 +366,9 @@ elif menu == "🛒 Carrito de Compras":
                 
                 st.session_state.cart = []
 
+    # Pie de página con Términos de Garantía
+    render_warranty_footer()
+
 # ----------------- VISTA 5: MIS PEDIDOS -----------------
 elif menu == "📋 Mis Pedidos y Estatus":
     st.title("📋 Historial de Pedidos y Estatus")
@@ -372,6 +380,9 @@ elif menu == "📋 Mis Pedidos y Estatus":
             st.markdown(f"📍 *Destino:* {order.get('state')} / {order.get('municipality')} vía `{order.get('courier')}`")
             st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Fecha Pago:* {order.get('date_paid', 'N/A')}")
             st.markdown("---")
+
+    # Pie de página con Términos de Garantía
+    render_warranty_footer()
 
 # ----------------- VISTA 6: PANEL DE ADMINISTRACIÓN Y REPORTES DIARIOS -----------------
 elif menu == "🔐 Panel de Administración":
@@ -394,7 +405,6 @@ elif menu == "🔐 Panel de Administración":
         st.markdown("---")
         st.subheader("📊 Base de Datos General (Almacenamiento Permanente por Fecha)")
         
-        # LÍNEA CORREGIDA AQUÍ ABAJO:
         paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
         
         if not paid_orders:
@@ -402,7 +412,6 @@ elif menu == "🔐 Panel de Administración":
         else:
             st.metric("Total Histórico de Pedidos Pagados", len(paid_orders))
             
-            # --- CONSOLIDACIÓN DE DATOS PARA REPORTES ---
             report_data = []
             for order in paid_orders:
                 c_name = order.get('client_name', 'Cliente General')
@@ -447,10 +456,7 @@ elif menu == "🔐 Panel de Administración":
             
             df_report = pd.DataFrame(report_data)
             
-            # --- MÓDULO DE REPORTES Y FILTROS POR FECHA ---
             st.markdown("### 📅 Reporte Diario y Filtrado Histórico")
-            
-            # Selector de tipo de reporte
             report_mode = st.radio("Seleccione el enfoque del reporte:", [
                 "Reporte Diario por Fecha Específica",
                 "Reporte Consolidado General", 
@@ -492,7 +498,6 @@ elif menu == "🔐 Panel de Administración":
                 st.dataframe(df_filtered, use_container_width=True)
             
             st.markdown("---")
-            # Botón de descarga CSV del reporte histórico acumulado o diario
             csv_export = df_report.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="📥 Descargar Base de Datos Histórica en CSV",
