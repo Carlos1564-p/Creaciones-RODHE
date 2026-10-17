@@ -394,7 +394,8 @@ elif menu == "🔐 Panel de Administración":
         st.markdown("---")
         st.subheader("📊 Base de Datos General (Almacenamiento Permanente por Fecha)")
         
-        paid_orders = [o for o in st.session_state.orders if o.get('status'] == "Pagado y Verificado"]
+        # LÍNEA CORREGIDA AQUÍ ABAJO:
+        paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
         
         if not paid_orders:
             st.info("No hay pedidos pagados y verificados registrados en el sistema actualmente.")
