@@ -507,106 +507,10 @@ elif menu == "🔐 Panel de Administración":
         st.markdown("---")
         st.subheader("📊 Base de Datos General (Almacenamiento Permanente por Fecha)")
         
-        paid_orders = [o for o in st.session_state.orders if o.get('status'] == "Pagado y Verificado"]
+        # LÍNEA CORREGIDA AQUÍ ABAJO:
+        paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
         
         if not paid_orders:
             st.info("No hay pedidos pagados y verificados registrados en el sistema actualmente.")
         else:
             st.metric("Total Histórico de Pedidos Pagados", len(paid_orders))
-            
-            report_data = []
-            for order in paid_orders:
-                c_name = order.get('client_name', 'Cliente General')
-                state_dest = order.get('state', 'N/A')
-                municipality_dest = order.get('municipality', 'N/A')
-                courier_dest = order.get('courier', 'N/A')
-                ref_pay = order.get('reference', 'N/A')
-                payment_date = order.get('date_paid', str(datetime.today().date()))
-                pay_mode = order.get('payment_mode', 'Pago Total (100%)')
-                paid_amt = order.get('amount_paid', order['total'])
-                
-                for item in order.get('items', []):
-                    store = item.get('origin', 'Stock Nacional')
-                    price = item.get('price', 0.0)
-                    
-                    if store in ["Shein", "Alibaba"]:
-                        margin = "35% (Pre-pedido)"
-                        delivery_time = "5 a 8 días hábiles"
-                        store_type = "Internacional"
-                    elif store in ["Amazon", "eBay"]:
-                        margin = "30% (Importación)"
-                        delivery_time = "4 a 6 días hábiles"
-                        store_type = "Internacional"
-                    else:
-                        margin = "40% (Stock Local)"
-                        delivery_time = "1 a 3 días (Nacional)"
-                        store_type = "Nacional"
-                        
-                    report_data.append({
-                        "Fecha Pago": payment_date,
-                        "Cliente": c_name,
-                        "Producto": item.get('name'),
-                        "Modo Compra": item.get('mode'),
-                        "Modalidad Pago": pay_mode,
-                        "Monto Pagado ($)": paid_amt,
-                        "Precio Item ($)": price,
-                        "Margen Comercial": margin,
-                        "Proveedor": store,
-                        "Tipo": store_type,
-                        "Estado Destino": state_dest,
-                        "Municipio": municipality_dest,
-                        "Encomienda": courier_dest,
-                        "Referencia": ref_pay
-                    })
-            
-            df_report = pd.DataFrame(report_data)
-            
-            st.markdown("### 📅 Reporte Diario y Filtrado Histórico")
-            report_mode = st.radio("Seleccione el enfoque del reporte:", [
-                "Reporte Diario por Fecha Específica",
-                "Reporte Consolidado General", 
-                "Reporte por Cliente", 
-                "Reporte por Empresa (Nacional / Internacional)", 
-                "Reporte por Producto", 
-                "Reporte por Estado"
-            ], horizontal=True)
-            
-            if report_mode == "Reporte Diario por Fecha Específica":
-                available_dates = sorted(df_report["Fecha Pago"].unique(), reverse=True)
-                selected_date = st.selectbox("Seleccione la Fecha de Compra", available_dates)
-                df_filtered = df_report[df_report["Fecha Pago"] == selected_date]
-                st.markdown(f"#### Compras registradas para el día: `{selected_date}`")
-                st.dataframe(df_filtered, use_container_width=True)
-                
-            elif report_mode == "Reporte Consolidado General":
-                st.markdown("#### Historial Completo Acumulado")
-                st.dataframe(df_report, use_container_width=True)
-                
-            elif report_mode == "Reporte por Cliente":
-                selected_client = st.selectbox("Seleccione el Cliente", df_report["Cliente"].unique())
-                df_filtered = df_report[df_report["Cliente"] == selected_client]
-                st.dataframe(df_filtered, use_container_width=True)
-                
-            elif report_mode == "Reporte por Empresa (Nacional / Internacional)":
-                selected_type = st.selectbox("Seleccione tipo de empresa / origen", df_report["Tipo"].unique())
-                df_filtered = df_report[df_report["Tipo"] == selected_type]
-                st.dataframe(df_filtered, use_container_width=True)
-                
-            elif report_mode == "Reporte por Producto":
-                selected_prod = st.selectbox("Seleccione el Producto", df_report["Producto"].unique())
-                df_filtered = df_report[df_report["Producto"] == selected_prod]
-                st.dataframe(df_filtered, use_container_width=True)
-                
-            elif report_mode == "Reporte por Estado":
-                selected_st = st.selectbox("Seleccione el Estado de Destino", df_report["Estado Destino"].unique())
-                df_filtered = df_report[df_report["Estado Destino"] == selected_st]
-                st.dataframe(df_filtered, use_container_width=True)
-            
-            st.markdown("---")
-            csv_export = df_report.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Descargar Base de Datos Histórica en CSV",
-                data=csv_export,
-                file_name=f"base_datos_historica_rodhe_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv"
-            )
