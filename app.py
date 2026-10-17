@@ -249,7 +249,8 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
+        # LÍNEA CORREGIDA:
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
