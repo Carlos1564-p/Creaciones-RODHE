@@ -27,6 +27,8 @@ def load_database():
                     "client_name": str(row["client_name"]),
                     "items": eval(row["items"]) if pd.notna(row["items"]) else [],
                     "total": float(row["total"]),
+                    "payment_mode": str(row.get("payment_mode", "Pago Total (100%)")),
+                    "amount_paid": float(row.get("amount_paid", row["total"])),
                     "payment": str(row["payment"]),
                     "reference": str(row["reference"]),
                     "bank": str(row["bank"]),
@@ -54,6 +56,8 @@ def save_order_to_disk(new_order):
             "client_name": order["client_name"],
             "items": str(order["items"]),
             "total": order["total"],
+            "payment_mode": order.get("payment_mode", "Pago Total (100%)"),
+            "amount_paid": order.get("amount_paid", order["total"]),
             "payment": order["payment"],
             "reference": order["reference"],
             "bank": order["bank"],
@@ -80,7 +84,7 @@ def render_warranty_footer():
     * **Logística Inversa:** Los retornos por cambio de opinión corren por cuenta del comprador; las sustituciones por errores de despacho o defectos verificados son cubiertas al 100% por Creaciones Rodhe.
     """)
 
-# ----------------- FUNCIONES DE ROTACIÓN DIARIA DE IMÁGENES -----------------
+# ----------------- POOLS DE IMÁGENES ROTATIVAS -----------------
 JEWELRY_POOL = [
     "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80",
     "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80",
@@ -103,13 +107,17 @@ def get_daily_product_image(category, index):
     return pool[(index + day_offset) % len(pool)]
 
 # ----------------- FUNCIÓN DE BOTÓN WHATSAPP -----------------
-def create_whatsapp_button(phone_number, customer_name, order_id, total, reference, state, courier):
+def create_whatsapp_button(phone_number, customer_name, order_id, total, amount_paid, payment_mode, reference, state, courier):
+    balance = total - amount_paid
+    msg_payment = f"Pago Total (100%): *${total:.2f} USD*" if payment_mode == "Pago Total (100%)" else f"Abono (50%): *${amount_paid:.2f} USD* (Restante:${balance:.2f} USD)"
+    
     message = (
         f"¡Hola {customer_name}! 💎 Gracias por confiar en *Creaciones Rodhe*.\n\n"
-        f"Tu pedido *#{order_id}* por un monto de *${total:.2f} USD* ha sido registrado.\n"
+        f"Tu pedido *#{order_id}* ha sido registrado.\n"
+        f"Modalidad: {msg_payment}\n"
         f"Ref de pago: *{reference}* | Destino: *{state}* vía *{courier}*\n"
-        f"📦 El tiempo promedio para que tu pedido esté en la puerta de tu casa es de *3 a 5 días hábiles*.\n\n"
-        f"Te mantendremos informado con tu nota de entrega. ¡Estamos a tu orden!"
+        f"📦 Tiempo estimado de entrega: *3 a 5 días hábiles*.\n\n"
+        f"Te mantendremos informado. ¡Estamos a tu orden!"
     )
     encoded_message = urllib.parse.quote(message)
     whatsapp_url = f"https://wa.me/{phone_number}?text={encoded_message}"
@@ -144,30 +152,73 @@ if 'quotes' not in st.session_state:
 if 'admin_logged' not in st.session_state:
     st.session_state.admin_logged = False
 
-# Catálogo con origen y campo de video real incorporado
+# CATÁLOGO AMPLIADO A 50 PRODUCTOS (25 Bisutería + 25 Tecnología)
 if 'products' not in st.session_state:
     st.session_state.products = [
-        {"id": 1, "name": "Set de Cadenas Minimalistas Acero Quirúrgico", "category": "Bisuteria", "origin": "Shein", "price_retail": 12.0, "price_wholesale": 8.5, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 2, "name": "Anillos Apilables con Zirconias (Set x5)", "category": "Bisuteria", "origin": "Alibaba", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 3, "name": "Pulsera Estilo Cartier de Lujo (Baño Oro 18k)", "category": "Bisuteria", "origin": "Stock Nacional", "price_retail": 18.0, "price_wholesale": 13.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 4, "name": "Zarcillos Huggie con Incrustaciones", "category": "Bisuteria", "origin": "Shein", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 60, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 5, "name": "Kit Emprendedor Bisutería Surtida (20 pzas)", "category": "Bisuteria", "origin": "Alibaba", "price_retail": 65.0, "price_wholesale": 48.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 6, "name": "Smartwatch Deportivo Ultra Serie 8", "category": "Tecnologia", "origin": "Amazon", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 7, "name": "Audífonos Inalámbricos TWS Pro con Cancelación", "category": "Tecnologia", "origin": "eBay", "price_retail": 15.0, "price_wholesale": 10.5, "stock": 45, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 8, "name": "Aro de Luz LED 10' con Trípode para Streamers", "category": "Tecnologia", "origin": "Stock Nacional", "price_retail": 22.0, "price_wholesale": 16.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 9, "name": "Power Bank Carga Rápida 20,000mAh", "category": "Tecnologia", "origin": "Amazon", "price_retail": 28.0, "price_wholesale": 21.0, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"id": 10, "name": "Cargador Rápido Multipuerto USB-C GaN 65W", "category": "Tecnologia", "origin": "Alibaba", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"}
+        # --- 25 BISUTERÍA ---
+        {"id": 1, "name": "Set Cadenas Minimalistas Acero", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 12.0, "price_wholesale": 8.5, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 2, "name": "Anillos Apilables Zirconias (Set x5)", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 3, "name": "Pulsera Estilo Cartier Baño Oro 18k", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 4, "name": "Zarcillos Huggies Brillantes", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 60, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 5, "name": "Kit Emprendedor Bisutería (20 pzas)", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 65.0, "price_wholesale": 48.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 6, "name": "Collar Ojo Turco con Circones", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 14.0, "price_wholesale": 9.5, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 7, "name": "Tobillera Doble en Acero Inoxidable", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 7.0, "price_wholesale": 4.5, "stock": 45, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 8, "name": "Gargantilla Choker de Lujo", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 22.0, "price_wholesale": 15.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 9, "name": "Pulseras de Hilo con Dijes de Plata", "category": "Bisuteria", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 6.0, "price_wholesale": 3.8, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 10, "name": "Set Anillos Midi Boho Chic", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 9.0, "price_wholesale": 6.0, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 11, "name": "Reloj Dama Elegante Acero Rosé", "category": "Bisuteria", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 35.0, "price_wholesale": 26.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 12, "name": "Aretes Largos de Fiesta con Cristales", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 11.0, "price_wholesale": 7.5, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 13, "name": "Colgante Letra Inicial Personalizada", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 10.0, "price_wholesale": 6.8, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 14, "name": "Pulsera Tenis con Cristales Austríacos", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 28.0, "price_wholesale": 20.0, "stock": 18, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 15, "name": "Set Anillos de Pareja Ajustables", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.5, "price_wholesale": 5.5, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 16, "name": "Broche de Solapa Perlas y Zirconias", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 12.0, "price_wholesale": 8.0, "stock": 22, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 17, "name": "Anillo Solitario de Compromiso Baño Oro", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 30.0, "price_wholesale": 22.0, "stock": 12, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 18, "name": "Zarcillos Pequeños Geometricos Acero", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 5.0, "price_wholesale": 3.0, "stock": 60, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 19, "name": "Cadena de Cuerpo (Body Chain) Playa", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 15.0, "price_wholesale": 10.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 20, "name": "Pulseras Magnéticas del Amor (Par)", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 9.99, "price_wholesale": 6.5, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 21, "name": "Collar Multicapas con Monedas", "category": "Bisuteria", "origin": "Shein", "tag": "Alta Rotación", "price_retail": 13.0, "price_wholesale": 9.0, "stock": 28, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 22, "name": "Juego de Joyas de Novia Completo", "category": "Bisuteria", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 45.0, "price_wholesale": 32.0, "stock": 8, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 23, "name": "Anillo Giratorio Antiestrés Acero", "category": "Bisuteria", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 11.0, "price_wholesale": 7.2, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 24, "name": "Zarcillos Enhebrados Cadena Larga", "category": "Bisuteria", "origin": "Shein", "tag": "En Oferta", "price_retail": 6.5, "price_wholesale": 4.0, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 25, "name": "Tobillera con Dijes de Cristales", "category": "Bisuteria", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 7.5, "price_wholesale": 4.8, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+
+        # --- 25 TECNOLOGÍA ---
+        {"id": 26, "name": "Smartwatch Deportivo Ultra Serie 8", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 27, "name": "Audífonos Inalámbricos TWS Pro ANC", "category": "Tecnologia", "origin": "eBay", "tag": "En Oferta", "price_retail": 15.0, "price_wholesale": 10.5, "stock": 45, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 28, "name": "Aro de Luz LED 10' con Trípode Studio", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Rotación", "price_retail": 22.0, "price_wholesale": 16.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 29, "name": "Power Bank Carga Rápida 20,000mAh", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 28.0, "price_wholesale": 21.0, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 30, "name": "Cargador Rápido USB-C GaN 65W", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 31, "name": "Mini Impresora Térmica Portátil Bluetooth", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 32.0, "price_wholesale": 24.0, "stock": 18, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 32, "name": "Gimbal Estabilizador para Smartphone L08", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 45.0, "price_wholesale": 34.0, "stock": 12, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 33, "name": "Lámpara de Escritorio LED con Carga Inalámbrica", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 30.0, "price_wholesale": 22.0, "stock": 15, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 34, "name": "Cable Magnético 3 en 1 Carga Rápida", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 6.0, "price_wholesale": 3.8, "stock": 70, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 35, "name": "Soporte Magnético de Auto con Carga Qi", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 18.0, "price_wholesale": 12.5, "stock": 30, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 36, "name": "Bocina Bluetooth Portátil Impermeable IPX7", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 24.0, "price_wholesale": 17.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 37, "name": "Smart Glasses con Audio Bluetooth", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Gama", "price_retail": 55.0, "price_wholesale": 42.0, "stock": 10, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 38, "name": "Kit de Limpieza 7 en 1 para Gadgets", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 8.0, "price_wholesale": 5.0, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 39, "name": "Hub USB-C 5 en 1 Multipuerto Adaptador", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 22.0, "price_wholesale": 15.5, "stock": 22, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 40, "name": "Cámara de Seguridad WiFi Mini 1080p", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Gama", "price_retail": 26.0, "price_wholesale": 19.0, "stock": 20, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 41, "name": "Micrófono Lavalier Inalámbrico Dual", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 35.0, "price_wholesale": 27.0, "stock": 16, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 42, "name": "Reloj Inteligente Infantil con GPS Q12", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 20.0, "price_wholesale": 14.0, "stock": 25, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 43, "name": "Teclado y Mouse Inalámbrico Ergonómico Slim", "category": "Tecnologia", "origin": "Stock Nacional", "tag": "Alta Gama", "price_retail": 38.0, "price_wholesale": 28.0, "stock": 12, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 44, "name": "Organizador de Cables de Viaje Impermeable", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 9.0, "price_wholesale": 5.8, "stock": 40, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 45, "name": "Proyector LED Portátil Mini HD 1080p", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 85.0, "price_wholesale": 68.0, "stock": 6, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 46, "name": "Soporte Plegable de Aluminio para Laptop", "category": "Tecnologia", "origin": "Alibaba", "tag": "Alta Rotación", "price_retail": 16.0, "price_wholesale": 11.0, "stock": 28, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 47, "name": "Control de Juegos Bluetooth para Móvil", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Rotación", "price_retail": 25.0, "price_wholesale": 18.0, "stock": 18, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 48, "name": "Localizador Bluetooth Anti-Pérdida Smart Tag", "category": "Tecnologia", "origin": "Shein", "tag": "En Oferta", "price_retail": 10.0, "price_wholesale": 6.5, "stock": 50, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 49, "name": "Ventilador Portátil de Cuello Recargable", "category": "Tecnologia", "origin": "Alibaba", "tag": "En Oferta", "price_retail": 14.0, "price_wholesale": 9.5, "stock": 35, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+        {"id": 50, "name": "Estación de Carga Inalámbrica 3 en 1 MagSafe", "category": "Tecnologia", "origin": "Amazon", "tag": "Alta Gama", "price_retail": 40.0, "price_wholesale": 30.0, "stock": 14, "video_url": "https://www.w3schools.com/html/mov_bbb.mp4"}
     ]
 
 # ----------------- BARRA LATERAL (LOGO Y MENÚ) -----------------
 with st.sidebar:
     try:
-        st.image("logorode.jpg", width=120)
+        st.image("logo.png", width=120)
     except:
         st.markdown("### 💎 Creaciones Rodhe")
     
     st.markdown("**Plataforma Digital de Lujo**")
-    st.caption(f"📅 Base de Datos Persistente Activa")
+    st.caption(f"📅 50 Productos Activos en Catálogo")
     st.markdown("---")
 
 menu = st.sidebar.radio("Menú Principal", [
@@ -181,21 +232,28 @@ menu = st.sidebar.radio("Menú Principal", [
 
 # ----------------- VISTA 1: CATÁLOGO Y TIENDA -----------------
 if menu == "🛍️ Catálogo y Tienda":
-    st.title("💎 Catálogo Exclusivo - Creaciones Rodhe")
-    st.markdown("Explora nuestra selección identificando el **origen del producto** (Stock Nacional o importado de plataformas globales).")
+    st.title("💎 Catálogo Exclusivo (50 Artículos - Bisutería & Tecnología)")
+    st.markdown("Explora nuestra selección filtrada por categoría y etiquetada por categoría comercial (*En Oferta, Alta Rotación, Alta Gama*).")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         selected_cat = st.selectbox("Filtrar por Categoría", ["Todas", "Bisuteria", "Tecnologia"])
     with col2:
-        pricing_mode = st.radio("Modo de Compra", ["Detal", "Al Mayor (Pre-pedidos / Stock)"], horizontal=True)
+        selected_tag = st.selectbox("Filtrar por Tendencia", ["Todas", "En Oferta", "Alta Rotación", "Alta Gama"])
+    with col3:
+        pricing_mode = st.radio("Modo de Compra", ["Detal", "Al Mayor (Pre-pedidos)"], horizontal=True)
 
     is_wholesale = "Mayor" in pricing_mode
     
+    # Filtrado dinámico
     filtered_products = st.session_state.products
     if selected_cat != "Todas":
-        filtered_products = [p for p in st.session_state.products if p["category"] == selected_cat]
+        filtered_products = [p for p in filtered_products if p["category"] == selected_cat]
+    if selected_tag != "Todas":
+        filtered_products = [p for p in filtered_products if p["tag"] == selected_tag]
 
+    st.markdown(f"**Mostrando {len(filtered_products)} productos disponibles:**")
+    
     cols = st.columns(3)
     for index, product in enumerate(filtered_products):
         daily_image = get_daily_product_image(product["category"], product["id"])
@@ -203,16 +261,15 @@ if menu == "🛍️ Catálogo y Tienda":
         with cols[index % 3]:
             st.image(daily_image, use_container_width=True)
             st.subheader(product["name"])
-            st.markdown(f"🏷️ **Origen / Proveedor:** `{product['origin']}`")
+            st.markdown(f"🏷️ **Origen:** `{product['origin']}` | ⚡ **Tag:** `{product['tag']}`")
             
             price = product["price_wholesale" if is_wholesale else "price_retail"]
             st.markdown(f"**Precio:** ${price:.2f} USD")
-            st.markdown(f"📦 *Disponibles:* {product['stock']} unidades")
+            st.markdown(f"📦 *Stock:* {product['stock']} unidades")
             
-            with st.expander("Ver Reel / Video Real del Producto"):
-                # Reproduce el video configurado en la base de datos del producto
+            with st.expander("Ver Video / Reel Real del Producto"):
                 st.video(product.get("video_url", "https://www.w3schools.com/html/mov_bbb.mp4"))
-                st.caption("Video demostrativo real de la prenda o artículo.")
+                st.caption("Demostración real en alta calidad.")
             
             if st.button(f"Agregar al Carrito", key=f"add_{product['id']}"):
                 st.session_state.cart.append({
@@ -250,16 +307,16 @@ elif menu == "📦 Cotizador Shein / Amazon":
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        # LÍNEA CORREGIDA:
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
         st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({"platform": platform, "total": final_price, "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
             st.info("Cotización guardada.")
-# ----------------- VISTA 4: CARRITO, PAGO Y DATOS DE ENVÍO -----------------
+
+# ----------------- VISTA 4: CARRITO, PAGO Y OPCIÓN DE ABONO -----------------
 elif menu == "🛒 Carrito de Compras":
-    st.title("🛒 Tu Carrito de Compras, Envío y Pago Definitivo")
+    st.title("🛒 Tu Carrito de Compras, Envío y Modalidad de Pago")
     
     if not st.session_state.cart:
         st.info("Tu carrito está vacío.")
@@ -269,10 +326,27 @@ elif menu == "🛒 Carrito de Compras":
             st.markdown(f"- **{item['name']}** ({item['origin']}) - [{item['mode']}] - **${item['price']:.2f}**")
             total_general += item['price']
         
-        st.markdown(f"### Total a Pagar: **${total_general:.2f} USD**")
+        st.markdown(f"### Total General del Pedido: **${total_general:.2f} USD**")
         st.markdown("---")
         
-        st.subheader("1. Datos de Envío y Destino en Venezuela")
+        st.subheader("1. Selecciona la Modalidad de Pago")
+        payment_mode_choice = st.radio(
+            "¿Cómo deseas realizar el pago?", 
+            ["Pago Total (100%)", "Abono Parcial (50%)"],
+            horizontal=True
+        )
+        
+        if payment_mode_choice == "Abono Parcial (50%)":
+            amount_to_pay_now = total_general * 0.5
+            balance_due = total_general * 0.5
+            st.warning(f"💡 **Has elegido Abono del 50%:** Debes cancelar hoy **${amount_to_pay_now:.2f} USD**. El 50\% restante (**${balance_due:.2f} USD**) se cancela al recibir tu encomienda.")
+        else:
+            amount_to_pay_now = total_general
+            balance_due = 0.0
+            st.success(f"💳 **Pago Total Contado:** Monto exacto a cancelar hoy: **${amount_to_pay_now:.2f} USD**.")
+
+        st.markdown("---")
+        st.subheader("2. Datos de Envío y Destino en Venezuela")
         with st.form("shipping_dest_form"):
             col_env1, col_env2, col_env3 = st.columns(3)
             with col_env1:
@@ -290,15 +364,15 @@ elif menu == "🛒 Carrito de Compras":
                 courier_choice = st.selectbox("Empresa de Encomienda", ["MRW", "Zoom", "Tealca", "Domesa"])
             
             st.markdown("---")
-            st.subheader("2. Selecciona tu Método de Pago")
-            payment_method = st.selectbox("Pasarela", [
+            st.subheader("3. Selecciona tu Pasarela de Pago")
+            payment_method = st.selectbox("Método", [
                 "Pago Móvil - Banca Amiga", 
                 "Zinli (Ahorro / ACH Xpress)", 
                 "Efectivo Divisa"
             ])
             
             if payment_method == "Pago Móvil - Banca Amiga":
-                st.success("""
+                st.success(f"""
                 📱 **Datos Pago Móvil (Banca Amiga):**
                 - **Cédula / RIF:** V-14242461
                 - **Teléfono:** 04244581437
@@ -312,7 +386,7 @@ elif menu == "🛒 Carrito de Compras":
                 """)
                 
             st.markdown("---")
-            st.subheader("3. Registro de Datos de Pago del Cliente")
+            st.subheader("4. Registro de Datos de Pago del Cliente")
             
             col_1, col_2 = st.columns(2)
             with col_1:
@@ -339,6 +413,8 @@ elif menu == "🛒 Carrito de Compras":
                     "client_name": client_name_input,
                     "items": items_in_order,
                     "total": total_general,
+                    "payment_mode": payment_mode_choice,
+                    "amount_paid": amount_to_pay_now,
                     "payment": payment_method,
                     "reference": ref_number,
                     "bank": bank_used,
@@ -347,13 +423,13 @@ elif menu == "🛒 Carrito de Compras":
                     "municipality": municipality_input,
                     "courier": courier_choice,
                     "status": "Pagado y Verificado",
-                    "purchase_note": f"Pago verificado - Ref: {ref_number} ({bank_used})",
+                    "purchase_note": f"Modalidad: {payment_mode_choice} - Ref: {ref_number} ({bank_used})",
                     "delivery_note": f"Envío por {courier_choice} hacia {selected_state} ({municipality_input})",
                     "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
                 }
                 
                 save_order_to_disk(new_order_data)
-                st.success("¡Pedido y datos de envío/pago guardados de forma permanente en la base de datos!")
+                st.success("¡Pedido, modalidad de pago y datos guardados de forma permanente en la base de datos!")
                 
                 if client_phone:
                     st.markdown("### Notificar al Cliente vía WhatsApp")
@@ -362,6 +438,8 @@ elif menu == "🛒 Carrito de Compras":
                         customer_name=client_name_input,
                         order_id=new_order_id,
                         total=total_general,
+                        amount_paid=amount_to_pay_now,
+                        payment_mode=payment_mode_choice,
                         reference=ref_number,
                         state=selected_state,
                         courier=courier_choice
@@ -380,6 +458,7 @@ elif menu == "📋 Mis Pedidos y Estatus":
     else:
         for order in st.session_state.orders:
             st.markdown(f"**Pedido #{order['id']}** | Cliente: **{order.get('client_name', 'N/A')}** | Total: **${order['total']:.2f}**")
+            st.markdown(f"📌 *Modalidad:* `{order.get('payment_mode', 'Pago Total (100%)')}` | *Pagado:* `${order.get('amount_paid', order['total']):.2f}`")
             st.markdown(f"📍 *Destino:* {order.get('state')} / {order.get('municipality')} vía `{order.get('courier')}`")
             st.markdown(f"🔢 *Referencia:* `{order.get('reference', 'N/A')}` | *Fecha Pago:* {order.get('date_paid', 'N/A')}")
             st.markdown("---")
@@ -406,35 +485,29 @@ elif menu == "🔐 Panel de Administración":
             
         st.markdown("---")
         
-        # --- NUEVO MÓDULO: GESTIÓN Y EDICIÓN DE VIDEOS REALES DE PRODUCTOS ---
-        st.subheader("📹 Editor de Videos Reales (Reels de Cadenas y Relojes)")
-        st.markdown("Selecciona un producto para actualizar su enlace de video demostrativo real (formato MP4 o enlace directo).")
-        
+        st.subheader("📹 Editor de Videos Reales (Reels del Catálogo de 50 Artículos)")
         selected_prod_id = st.selectbox(
             "Seleccionar Producto del Catálogo", 
             options=[p["id"] for p in st.session_state.products],
             format_func=lambda x: next(f"ID {p['id']} - {p['name']} ({p['origin']})" for p in st.session_state.products if p["id"] == x)
         )
         
-        # Obtener el producto seleccionado
         prod_to_edit = next(p for p in st.session_state.products if p["id"] == selected_prod_id)
         
         with st.form(f"edit_video_form_{selected_prod_id}"):
             current_video = prod_to_edit.get("video_url", "")
-            new_video_url = st.text_input("URL del Video Real (Enlace directo MP4 o Reel)", value=current_video)
-            st.caption("💡 Tip: Puedes subir tu video a un servidor o nube pública (como GitHub, S3 o enlace directo MP4) y pegar la URL aquí.")
-            
+            new_video_url = st.text_input("URL del Video Real (Enlace MP4 o Reel)", value=current_video)
             submit_video_edit = st.form_submit_button("Actualizar Video del Producto")
             
             if submit_video_edit:
                 prod_to_edit["video_url"] = new_video_url
-                st.success(f"¡Video actualizado correctamente para: {prod_to_edit['name']}!")
+                st.success(f"¡Video actualizado para: {prod_to_edit['name']}!")
                 st.rerun()
                 
         st.markdown("---")
         st.subheader("📊 Base de Datos General (Almacenamiento Permanente por Fecha)")
         
-        paid_orders = [o for o in st.session_state.orders if o.get('status') == "Pagado y Verificado"]
+        paid_orders = [o for o in st.session_state.orders if o.get('status'] == "Pagado y Verificado"]
         
         if not paid_orders:
             st.info("No hay pedidos pagados y verificados registrados en el sistema actualmente.")
@@ -449,6 +522,8 @@ elif menu == "🔐 Panel de Administración":
                 courier_dest = order.get('courier', 'N/A')
                 ref_pay = order.get('reference', 'N/A')
                 payment_date = order.get('date_paid', str(datetime.today().date()))
+                pay_mode = order.get('payment_mode', 'Pago Total (100%)')
+                paid_amt = order.get('amount_paid', order['total'])
                 
                 for item in order.get('items', []):
                     store = item.get('origin', 'Stock Nacional')
@@ -471,16 +546,17 @@ elif menu == "🔐 Panel de Administración":
                         "Fecha Pago": payment_date,
                         "Cliente": c_name,
                         "Producto": item.get('name'),
-                        "Modo": item.get('mode'),
-                        "Precio (USD)": price,
+                        "Modo Compra": item.get('mode'),
+                        "Modalidad Pago": pay_mode,
+                        "Monto Pagado ($)": paid_amt,
+                        "Precio Item ($)": price,
                         "Margen Comercial": margin,
-                        "Tienda / Proveedor": store,
-                        "Tipo Empresa": store_type,
+                        "Proveedor": store,
+                        "Tipo": store_type,
                         "Estado Destino": state_dest,
                         "Municipio": municipality_dest,
                         "Encomienda": courier_dest,
-                        "Tiempo Estimado": delivery_time,
-                        "Referencia Pago": ref_pay
+                        "Referencia": ref_pay
                     })
             
             df_report = pd.DataFrame(report_data)
@@ -512,8 +588,8 @@ elif menu == "🔐 Panel de Administración":
                 st.dataframe(df_filtered, use_container_width=True)
                 
             elif report_mode == "Reporte por Empresa (Nacional / Internacional)":
-                selected_type = st.selectbox("Seleccione tipo de empresa / origen", df_report["Tipo Empresa"].unique())
-                df_filtered = df_report[df_report["Tipo Empresa"] == selected_type]
+                selected_type = st.selectbox("Seleccione tipo de empresa / origen", df_report["Tipo"].unique())
+                df_filtered = df_report[df_report["Tipo"] == selected_type]
                 st.dataframe(df_filtered, use_container_width=True)
                 
             elif report_mode == "Reporte por Producto":
