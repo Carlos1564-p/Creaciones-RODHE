@@ -93,7 +93,7 @@ if 'products' not in st.session_state:
 # ----------------- BARRA LATERAL (LOGO Y MENÚ) -----------------
 with st.sidebar:
     try:
-        st.image("logo.png", width=120)
+        st.image("logorode.jpg", width=120)
     except:
         st.markdown("### 💎 Creaciones Rodhe")
     
