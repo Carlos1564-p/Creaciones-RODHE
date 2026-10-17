@@ -315,19 +315,17 @@ elif menu == "📦 Cotizador Shein / Amazon":
         base_price = 24.99 if "amazon" in product_url.lower() else 8.50
         weight = 0.3 if category_q == "Bisuteria" else 1.2
         shipping_fee = weight * 20.0
-        final_price_usd = ((base_price * quantity_q) + shipping_fee) * 1.35
-        final_price_ves = final_price_usd * st.session_state.bcv_rate
+        final_price = ((base_price * quantity_q) + shipping_fee) * 1.35
         
         st.success("¡Cotización Generada!")
         st.markdown(f"### Estatus para {platform}")
-        st.markdown(f"- **Precio Base:** ${base_price:.2f} \vert{} **Flete Estimado:**${shipping_fee:.2f}")
-        st.markdown(f"### **Total Estimado en USD:** ${final_price_usd:.2f} USD")
-        st.markdown(f"### **Total Exacto en Bolívares (Tasa BCV {st.session_state.bcv_rate:.2f}):** Bs. {final_price_ves:,.2f}")
+        st.markdown(f"- **Precio Base:** ${base_price:.2f} | **Flete Estimado:** ${shipping_fee:.2f}")
+        st.markdown(f"### **Total Estimado en Venezuela:** ${final_price:.2f} USD")
         
         if st.button("Guardar en mi Panel"):
             st.session_state.quotes.append({
                 "platform": platform, 
-                "total": final_price_usd, 
+                "total": final_price, 
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M")
             })
             st.info("Cotización guardada.")
